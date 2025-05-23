@@ -1,6 +1,5 @@
 node_modules/
 dist/
-.storybook/
 .vscode/
 .env
 .env.local
