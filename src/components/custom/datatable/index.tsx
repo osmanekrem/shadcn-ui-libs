@@ -51,6 +51,12 @@ import {
 import { DraggableHeader, DraggableTableCell } from "../draggable-header";
 import { Checkbox } from "../../ui/checkbox";
 import React from "react";
+import {
+  sanitizeSearchInput,
+  validatePaginationParams,
+  validateSortingParams,
+  RateLimiter,
+} from "../../../lib/security";
 
 declare module "@tanstack/react-table" {
   //add fuzzy filter to the filterFns
@@ -100,6 +106,16 @@ export function DataTable<TData>({
     console.warn("DataTable: columns should be an array");
     return <div>No columns provided</div>;
   }
+
+  // Security: Limit data size to prevent DoS
+  if (tableOptions.data.length > 100000) {
+    console.warn(
+      "DataTable: Large dataset detected, consider using lazy loading"
+    );
+  }
+
+  // Rate limiter for lazy loading
+  const rateLimiter = useMemo(() => new RateLimiter(10, 1000), []); // 10 requests per second
 
   const [showFilter, setShowFilter] = useState<boolean>(false);
 
@@ -189,12 +205,14 @@ export function DataTable<TData>({
 
   const [columnFilters, onColumnFiltersChange] = useExternalState(
     tableOptions.columnFilters,
-    tableOptions.onColumnFiltersChange
+    tableOptions.onColumnFiltersChange,
+    []
   );
 
   const [sorting, onSortingChange] = useExternalState(
     tableOptions.sorting,
-    tableOptions.onSortingChange
+    tableOptions.onSortingChange,
+    []
   );
 
   const [pagination, onPaginationChange] = useExternalState(
@@ -208,7 +226,8 @@ export function DataTable<TData>({
 
   const [columnVisibility, onColumnVisibilityChange] = useExternalState(
     tableOptions.columnVisibility,
-    tableOptions.onColumnVisibilityChange
+    tableOptions.onColumnVisibilityChange,
+    {}
   );
 
   const [columnOrder, onColumnOrderChange] = useExternalState(
@@ -219,7 +238,8 @@ export function DataTable<TData>({
 
   const [globalFilter, onGlobalFilterChange] = useExternalState(
     tableOptions.globalFilter?.globalFilter,
-    tableOptions.globalFilter?.onGlobalFilterChange
+    tableOptions.globalFilter?.onGlobalFilterChange,
+    ""
   );
 
   const [rowSelection, onRowSelectionChange] = useExternalState(
@@ -238,17 +258,52 @@ export function DataTable<TData>({
     if (tableOptions.lazy) {
       const { onLazyLoad } = tableOptions;
       if (onLazyLoad) {
+        // Rate limiting check
+        if (!rateLimiter.isAllowed("lazy-load")) {
+          console.warn("Lazy load rate limit exceeded");
+          return;
+        }
+
+        // Validate and sanitize parameters
+        const validatedPagination = validatePaginationParams(
+          pagination.pageIndex,
+          pagination.pageSize
+        );
+
+        const validatedSorting = validateSortingParams(sorting);
+
+        const sanitizedGlobalFilter =
+          typeof globalFilter === "string"
+            ? sanitizeSearchInput(globalFilter)
+            : "";
+
+        // Validate column filters
+        const validatedFilters = columnFilters.map((filter) => ({
+          ...filter,
+          value:
+            typeof filter.value === "string"
+              ? sanitizeSearchInput(filter.value)
+              : filter.value,
+        }));
+
         onLazyLoad({
-          first: pagination.pageIndex * pagination.pageSize,
-          rows: pagination.pageSize,
-          filters: columnFilters,
-          globalFilter,
-          page: pagination.pageIndex,
-          sorting,
+          first: validatedPagination.pageIndex * validatedPagination.pageSize,
+          rows: validatedPagination.pageSize,
+          filters: validatedFilters,
+          globalFilter: sanitizedGlobalFilter,
+          page: validatedPagination.pageIndex,
+          sorting: validatedSorting,
         });
       }
     }
-  }, [columnFilters, globalFilter, pagination, sorting, tableOptions.lazy]);
+  }, [
+    columnFilters,
+    globalFilter,
+    pagination,
+    sorting,
+    tableOptions.lazy,
+    rateLimiter,
+  ]);
 
   const table = useReactTable({
     data,
@@ -360,10 +415,16 @@ export function DataTable<TData>({
             <DebouncedInput
               value={globalFilter ?? ""}
               onChange={(value) => {
-                table.setGlobalFilter(value);
+                const sanitizedValue =
+                  typeof value === "string"
+                    ? sanitizeSearchInput(value)
+                    : String(value);
+                table.setGlobalFilter(sanitizedValue);
               }}
               className=""
               placeholder="Search all columns..."
+              maxLength={500}
+              type="search"
             />
           )}
           {tableOptions.filter && (

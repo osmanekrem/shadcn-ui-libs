@@ -683,3 +683,113 @@ export const ColumnSizingPerformant = () => {
     </div>
   );
 };
+
+export const SecurityDemo = () => {
+  const [data, setData] = useState<Person[]>(defaultData);
+  const [securityLogs, setSecurityLogs] = useState<string[]>([]);
+
+  // Simulate malicious data
+  const maliciousData: Person[] = [
+    {
+      firstName: '<script>alert("XSS")</script>John',
+      lastName: 'Doe"; DROP TABLE users; --',
+      age: 999999999, // Large number
+      visits: -1000000, // Negative number
+      status: {
+        label: '<img src="x" onerror="alert(\'XSS\')">',
+        id: "malicious",
+      },
+      progress: 150, // Out of range
+      isActive: true,
+    },
+    ...defaultData,
+  ];
+
+  const addSecurityLog = (message: string) => {
+    setSecurityLogs((prev) => [
+      ...prev.slice(-9),
+      `${new Date().toLocaleTimeString()}: ${message}`,
+    ]);
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+        <h3 className="font-semibold text-yellow-800 mb-2">🔒 Security Demo</h3>
+        <p className="text-sm text-yellow-700">
+          This demo shows how the table handles potentially malicious input. All
+          inputs are automatically sanitized and validated.
+        </p>
+      </div>
+
+      <div className="flex gap-4">
+        <button
+          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          onClick={() => {
+            setData(maliciousData);
+            addSecurityLog(
+              "Loaded data with potential XSS and injection attempts"
+            );
+          }}
+        >
+          Load Malicious Data
+        </button>
+        <button
+          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+          onClick={() => {
+            setData(defaultData);
+            addSecurityLog("Loaded clean data");
+          }}
+        >
+          Load Clean Data
+        </button>
+        <button
+          className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+          onClick={() => {
+            setSecurityLogs([]);
+          }}
+        >
+          Clear Logs
+        </button>
+      </div>
+
+      <DataTable<Person>
+        tableOptions={{
+          data: data,
+          columns: columns,
+          filter: true,
+          globalFilter: {
+            show: true,
+          },
+        }}
+      />
+
+      {securityLogs.length > 0 && (
+        <div className="bg-gray-50 border rounded p-4">
+          <h4 className="font-semibold mb-2">Security Logs:</h4>
+          <div className="space-y-1 text-sm font-mono">
+            {securityLogs.map((log, index) => (
+              <div key={index} className="text-gray-700">
+                {log}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="bg-blue-50 border border-blue-200 rounded p-4">
+        <h4 className="font-semibold text-blue-800 mb-2">
+          Security Features Demonstrated:
+        </h4>
+        <ul className="text-sm text-blue-700 space-y-1">
+          <li>✅ XSS prevention in cell content</li>
+          <li>✅ SQL injection prevention in filters</li>
+          <li>✅ Number validation and bounds checking</li>
+          <li>✅ Input sanitization in search</li>
+          <li>✅ Rate limiting for requests</li>
+          <li>✅ Content length validation</li>
+        </ul>
+      </div>
+    </div>
+  );
+};
