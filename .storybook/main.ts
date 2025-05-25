@@ -7,9 +7,22 @@ const config: StorybookConfig = {
     "@storybook/addon-essentials",
     "@storybook/addon-interactions",
   ],
+  core: {
+    builder: "@storybook/builder-vite",
+  },
   framework: {
     name: "@storybook/react-vite",
     options: {},
+  },
+  viteFinal: async (config) => {
+    return {
+      ...config,
+      css: {
+        postcss: {
+          plugins: [require("@tailwindcss/postcss")],
+        },
+      },
+    };
   },
   typescript: {
     check: false,
