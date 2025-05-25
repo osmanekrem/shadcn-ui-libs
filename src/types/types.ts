@@ -8,6 +8,7 @@ import {
   PaginationState,
   ColumnSizingState,
 } from "@tanstack/react-table";
+import { TableTranslations } from "../lib/i18n";
 
 export type TableOptions<T> = {
   data: T[];
@@ -25,6 +26,9 @@ export type TableOptions<T> = {
   enableColumnResizing?: boolean;
   columnResizeMode?: "onChange" | "onEnd";
   columnResizeDirection?: "ltr" | "rtl";
+
+  // Internationalization
+  translations?: TableTranslations;
 } & Lazy &
   Sorting &
   ColumnFilters &

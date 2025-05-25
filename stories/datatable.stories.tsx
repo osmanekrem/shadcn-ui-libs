@@ -2,6 +2,11 @@ import type { Meta, StoryObj } from "@storybook/react";
 import React, { useState } from "react";
 import { DataTable } from "../src/components/custom/datatable";
 import { ColumnDef, LazyLoadEvent, TableOptions } from "../src/types/types";
+import {
+  availableLanguages,
+  SupportedLanguage,
+  TableTranslations,
+} from "../src/lib/i18n";
 
 type Person = {
   firstName: string;
@@ -790,6 +795,215 @@ export const SecurityDemo = () => {
           <li>✅ Content length validation</li>
         </ul>
       </div>
+    </div>
+  );
+};
+
+export const I18nDemo = () => {
+  const [data, setData] = useState<Person[]>(defaultData);
+  const [currentLanguage, setCurrentLanguage] =
+    useState<SupportedLanguage>("en");
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({});
+
+  // Extended data for better demonstration
+  const extendedData: Person[] = [
+    ...defaultData,
+    {
+      firstName: "alice",
+      lastName: "johnson",
+      age: 28,
+      visits: 75,
+      status: {
+        label: "Single",
+        id: "single",
+      },
+      progress: 65,
+      isActive: true,
+    },
+    {
+      firstName: "bob",
+      lastName: "smith",
+      age: 35,
+      visits: 120,
+      status: {
+        label: "In Relationship",
+        id: "in-relationship",
+      },
+      progress: 90,
+      isActive: false,
+    },
+    {
+      firstName: "charlie",
+      lastName: "brown",
+      age: 42,
+      visits: 200,
+      status: {
+        label: "Complicated",
+        id: "complicated",
+      },
+      progress: 30,
+      isActive: true,
+    },
+  ];
+
+  const currentTranslations = availableLanguages[currentLanguage].translations;
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-blue-50 border border-blue-200 rounded p-4">
+        <h3 className="font-semibold text-blue-800 mb-2">
+          🌍 Internationalization Demo
+        </h3>
+        <p className="text-sm text-blue-700 mb-4">
+          This demo showcases the table's internationalization features. Switch
+          between languages to see how all text elements are translated,
+          including pagination, filters, buttons, and accessibility labels.
+        </p>
+
+        <div className="flex flex-wrap gap-2">
+          <span className="text-sm font-medium text-blue-800">
+            Select Language:
+          </span>
+          {Object.entries(availableLanguages).map(([code, { name }]) => (
+            <button
+              key={code}
+              onClick={() => setCurrentLanguage(code as SupportedLanguage)}
+              className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
+                currentLanguage === code
+                  ? "bg-blue-600 text-white"
+                  : "bg-white text-blue-600 border border-blue-300 hover:bg-blue-50"
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <DataTable<Person>
+        tableOptions={{
+          data: extendedData,
+          columns: columns,
+          translations: currentTranslations,
+          filter: true,
+          globalFilter: {
+            show: true,
+          },
+          rowSelection,
+          onRowSelectionChange: setRowSelection,
+          reorderable: true,
+          enableColumnResizing: true,
+          pagination: {
+            pageSize: 3, // Small page size to show pagination
+            totalRecords: extendedData.length,
+            pageSizeOptions: [3, 5, 10],
+            mode: "advanced",
+            layout: ["total", "pageSize", "goto", "buttons"],
+          },
+        }}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-gray-50 border rounded p-4">
+          <h4 className="font-semibold mb-2">🎯 Features Demonstrated:</h4>
+          <ul className="text-sm space-y-1">
+            <li>✅ Pagination controls (Previous, Next, First, Last)</li>
+            <li>✅ Page size selector</li>
+            <li>✅ Go to page input</li>
+            <li>✅ Filter labels (All, True, False, Min, Max)</li>
+            <li>✅ Global search placeholder</li>
+            <li>✅ Show/Hide filter buttons</li>
+            <li>✅ Row selection labels</li>
+            <li>✅ Accessibility aria-labels</li>
+          </ul>
+        </div>
+
+        <div className="bg-gray-50 border rounded p-4">
+          <h4 className="font-semibold mb-2">🌐 Supported Languages:</h4>
+          <ul className="text-sm space-y-1">
+            <li>
+              <strong>English (en):</strong> Default language
+            </li>
+            <li>
+              <strong>Türkçe (tr):</strong> Turkish translations
+            </li>
+            <li>
+              <strong>Español (es):</strong> Spanish translations
+            </li>
+            <li>
+              <strong>Français (fr):</strong> French translations
+            </li>
+            <li>
+              <strong>Deutsch (de):</strong> German translations
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div className="bg-green-50 border border-green-200 rounded p-4">
+        <h4 className="font-semibold text-green-800 mb-2">💡 Usage Example:</h4>
+        <pre className="text-sm bg-white p-3 rounded border overflow-x-auto">
+          {`import { DataTable, turkishTranslations } from "tanstack-shadcn-table";
+
+<DataTable
+  tableOptions={{
+    data,
+    columns,
+    translations: turkishTranslations, // Use Turkish translations
+    // ... other options
+  }}
+/>`}
+        </pre>
+      </div>
+
+      <div className="bg-yellow-50 border border-yellow-200 rounded p-4">
+        <h4 className="font-semibold text-yellow-800 mb-2">
+          🔧 Custom Translations:
+        </h4>
+        <p className="text-sm text-yellow-700 mb-2">
+          You can also create custom translations by implementing the
+          TableTranslations interface:
+        </p>
+        <pre className="text-sm bg-white p-3 rounded border overflow-x-auto">
+          {`import { TableTranslations } from "tanstack-shadcn-table";
+
+const customTranslations: TableTranslations = {
+  pagination: {
+    previous: "Geri",
+    next: "İleri",
+    // ... other translations
+  },
+  filters: {
+    search: "Arama",
+    all: "Hepsi",
+    // ... other translations
+  },
+  // ... other sections
+};`}
+        </pre>
+      </div>
+
+      {Object.keys(rowSelection).length > 0 && (
+        <div className="bg-purple-50 border border-purple-200 rounded p-4">
+          <h4 className="font-semibold text-purple-800 mb-2">
+            📊 Selection Status (
+            {currentTranslations.selection.selectedCount.replace(
+              "{count}",
+              String(Object.keys(rowSelection).length)
+            )}
+            ):
+          </h4>
+          <p className="text-sm text-purple-700">
+            Selected rows: {Object.keys(rowSelection).join(", ")}
+          </p>
+          <button
+            onClick={() => setRowSelection({})}
+            className="mt-2 px-3 py-1 bg-purple-600 text-white rounded text-sm hover:bg-purple-700"
+          >
+            {currentTranslations.selection.deselectAll}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

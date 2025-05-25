@@ -10,8 +10,20 @@ import {
 } from "../ui/select";
 import { cn } from "../../lib/utils";
 import { sanitizeFilterValue, sanitizeSearchInput } from "../../lib/security";
+import {
+  TableTranslations,
+  defaultTranslations,
+  createTranslator,
+} from "../../lib/i18n";
 
-function FilterInput<T>({ column }: { column: Column<T> }) {
+function FilterInput<T>({
+  column,
+  translations = defaultTranslations,
+}: {
+  column: Column<T>;
+  translations?: TableTranslations;
+}) {
+  const t = createTranslator(translations);
   const columnFilterValue = column.getFilterValue();
   const filter = (column.columnDef as ColumnDef<T>)?.filter;
 
@@ -38,8 +50,8 @@ function FilterInput<T>({ column }: { column: Column<T> }) {
 
   if (filter?.type === "range") {
     const {
-      minPlaceholder = "Min",
-      maxPlaceholder = "Max",
+      minPlaceholder = t("filters.min"),
+      maxPlaceholder = t("filters.max"),
       showLimit = false,
       minLimit,
       maxLimit,
@@ -148,7 +160,7 @@ function FilterInput<T>({ column }: { column: Column<T> }) {
       options,
       optionLabel = "label",
       optionValue = "value",
-      allLabel = "All",
+      allLabel = t("filters.all"),
     } = filter ?? {};
 
     // Sanitize options
@@ -189,9 +201,9 @@ function FilterInput<T>({ column }: { column: Column<T> }) {
 
   if (filter?.type === "boolean") {
     const {
-      trueLabel = "True",
-      falseLabel = "False",
-      allLabel = "All",
+      trueLabel = t("filters.true"),
+      falseLabel = t("filters.false"),
+      allLabel = t("filters.all"),
     } = filter ?? {};
     return (
       <Select

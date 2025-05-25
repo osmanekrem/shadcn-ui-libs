@@ -902,3 +902,226 @@ MIT License - see the [LICENSE](LICENSE) file for details.
 ## 📞 Support
 
 If you have any questions or need help, please open an issue on GitHub.
+
+## 🌍 Internationalization (i18n)
+
+The library includes comprehensive internationalization support with built-in translations for multiple languages and the ability to create custom translations.
+
+### Supported Languages
+
+- **English (en)** - Default
+- **Turkish (tr)** - Türkçe
+- **Spanish (es)** - Español
+- **French (fr)** - Français
+- **German (de)** - Deutsch
+
+### Basic Usage
+
+```tsx
+import { DataTable, turkishTranslations } from "tanstack-shadcn-table";
+
+<DataTable
+  tableOptions={{
+    data,
+    columns,
+    translations: turkishTranslations, // Use Turkish translations
+  }}
+/>;
+```
+
+### Available Translation Objects
+
+```tsx
+import {
+  defaultTranslations, // English (default)
+  turkishTranslations, // Turkish
+  spanishTranslations, // Spanish
+  frenchTranslations, // French
+  germanTranslations, // German
+  availableLanguages, // All languages object
+} from "tanstack-shadcn-table";
+```
+
+### Dynamic Language Switching
+
+```tsx
+import { availableLanguages, SupportedLanguage } from "tanstack-shadcn-table";
+
+const [currentLanguage, setCurrentLanguage] = useState<SupportedLanguage>("en");
+const translations = availableLanguages[currentLanguage].translations;
+
+<DataTable
+  tableOptions={{
+    data,
+    columns,
+    translations,
+  }}
+/>;
+```
+
+### Custom Translations
+
+Create your own translations by implementing the `TableTranslations` interface:
+
+```tsx
+import { TableTranslations } from "tanstack-shadcn-table";
+
+const customTranslations: TableTranslations = {
+  pagination: {
+    previous: "Geri",
+    next: "İleri",
+    first: "İlk",
+    last: "Son",
+    page: "Sayfa",
+    of: "/",
+    rowsPerPage: "Sayfa başına satır",
+    goToPage: "Sayfaya git",
+    totalRecords: "Toplam: {total} kayıt",
+    showingXtoYofZ: "{total} kayıttan {from}-{to} arası gösteriliyor",
+    noData: "Veri bulunamadı",
+  },
+  filters: {
+    search: "Ara",
+    searchAllColumns: "Tüm sütunlarda ara...",
+    showFilter: "Filtreyi Göster",
+    hideFilter: "Filtreyi Gizle",
+    all: "Tümü",
+    true: "Doğru",
+    false: "Yanlış",
+    min: "Min",
+    max: "Maks",
+    // ... other filter translations
+  },
+  // ... other sections
+};
+```
+
+### Translation Utilities
+
+The library provides utility functions for working with translations:
+
+```tsx
+import { createTranslator, t, interpolate } from "tanstack-shadcn-table";
+
+// Create a bound translator function
+const translator = createTranslator(turkishTranslations);
+const text = translator("pagination.next"); // "Sonraki"
+
+// Direct translation with interpolation
+const message = t(turkishTranslations, "pagination.totalRecords", {
+  total: 100,
+});
+// Result: "Toplam: 100 kayıt"
+
+// String interpolation
+const interpolated = interpolate("Hello {name}!", { name: "World" });
+// Result: "Hello World!"
+```
+
+### What Gets Translated
+
+The i18n system covers all user-facing text in the table:
+
+#### Pagination
+
+- Navigation buttons (Previous, Next, First, Last)
+- Page size selector labels
+- Go to page labels
+- Total records display
+- Accessibility labels
+
+#### Filters
+
+- Filter button text (Show/Hide Filter)
+- Global search placeholder
+- Filter type labels (All, True, False, Min, Max)
+- Range filter placeholders
+
+#### Row Selection
+
+- Checkbox accessibility labels
+- Selection count messages
+- Select all/deselect all labels
+
+#### Column Management
+
+- Column visibility controls
+- Resize and reorder labels
+- Accessibility descriptions
+
+#### Status Messages
+
+- Loading states
+- Error messages
+- No results messages
+
+### Accessibility and i18n
+
+All accessibility labels (aria-labels, aria-descriptions) are also translated, ensuring your table is accessible in multiple languages:
+
+```tsx
+// Automatically translated accessibility labels
+<button aria-label={t("pagination.next")}>
+  <ChevronRightIcon />
+</button>
+
+<input aria-label={t("filters.searchAllColumns")} />
+```
+
+### Best Practices
+
+1. **Consistent Language**: Ensure all parts of your application use the same language
+2. **Fallback**: Always provide fallback text for missing translations
+3. **Context**: Consider cultural context when creating custom translations
+4. **Testing**: Test your application with different languages to ensure proper layout
+5. **Performance**: Translation objects are memoized for optimal performance
+
+### Example: Complete Multilingual Setup
+
+```tsx
+import {
+  DataTable,
+  availableLanguages,
+  SupportedLanguage,
+  TableTranslations,
+} from "tanstack-shadcn-table";
+
+function MultilingualTable() {
+  const [language, setLanguage] = useState<SupportedLanguage>("en");
+  const translations = availableLanguages[language].translations;
+
+  return (
+    <div>
+      {/* Language Selector */}
+      <div className="mb-4">
+        {Object.entries(availableLanguages).map(([code, { name }]) => (
+          <button
+            key={code}
+            onClick={() => setLanguage(code as SupportedLanguage)}
+            className={language === code ? "active" : ""}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+
+      {/* Table with translations */}
+      <DataTable
+        tableOptions={{
+          data,
+          columns,
+          translations,
+          pagination: {
+            pageSize: 10,
+            totalRecords: data.length,
+            pageSizeOptions: [5, 10, 20, 50],
+          },
+          filter: true,
+          globalFilter: { show: true },
+          rowSelection: {},
+        }}
+      />
+    </div>
+  );
+}
+```

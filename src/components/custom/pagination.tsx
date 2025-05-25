@@ -11,6 +11,11 @@ import {
 import { PaginationOptions } from "../../types/types";
 import DebouncedInput from "./debounced-input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
+import {
+  TableTranslations,
+  defaultTranslations,
+  createTranslator,
+} from "../../lib/i18n";
 
 type Props = {
   totalPages: number;
@@ -23,6 +28,7 @@ type Props = {
   className?: string;
   mode?: "default" | "compact" | "advanced";
   maxVisiblePages?: number;
+  translations?: TableTranslations;
 };
 
 export default function Pagination({
@@ -36,7 +42,10 @@ export default function Pagination({
   className,
   mode = "default",
   maxVisiblePages = 7,
+  translations = defaultTranslations,
 }: Props) {
+  const t = createTranslator(translations);
+
   const getVisiblePages = useCallback(() => {
     const pages = [];
 
@@ -156,6 +165,7 @@ export default function Pagination({
         size={"icon"}
         onClick={() => onSetPage(0)}
         disabled={!canPreviousPage}
+        aria-label={t("pagination.first")}
       >
         <ChevronsLeftIcon className="h-4 w-4" />
       </Button>
@@ -164,6 +174,7 @@ export default function Pagination({
         size={"icon"}
         onClick={() => onPrevious()}
         disabled={!canPreviousPage}
+        aria-label={t("pagination.previous")}
       >
         <ChevronLeftIcon className="h-4 w-4" />
       </Button>
@@ -197,6 +208,7 @@ export default function Pagination({
         size={"icon"}
         onClick={() => onNext()}
         disabled={!canNextPage}
+        aria-label={t("pagination.next")}
       >
         <ChevronRightIcon className="h-4 w-4" />
       </Button>
@@ -205,6 +217,7 @@ export default function Pagination({
         size={"icon"}
         onClick={() => onSetPage(totalPages - 1)}
         disabled={!canNextPage || totalPages === 0}
+        aria-label={t("pagination.last")}
       >
         <ChevronsRightIcon className="h-4 w-4" />
       </Button>
@@ -218,6 +231,7 @@ type GoToPageProps = {
   onSetPage: (page: number) => void;
   className?: string;
   label?: string;
+  translations?: TableTranslations;
 };
 
 export function GoToPage({
@@ -226,11 +240,16 @@ export function GoToPage({
   totalPages,
   className,
   label,
+  translations = defaultTranslations,
 }: GoToPageProps) {
+  const t = createTranslator(translations);
+
   return (
     <div className={cn("flex items-center gap-2", className)}>
       {label && (
-        <span className="text-sm text-gray-700">{label || "Go to page:"}</span>
+        <span className="text-sm text-gray-700">
+          {label || t("pagination.goToPage")}
+        </span>
       )}
       <DebouncedInput
         type="number"
@@ -242,9 +261,11 @@ export function GoToPage({
           onSetPage(page);
         }}
         className="w-16 h-8 border border-gray-300 rounded-md px-2"
-        placeholder="Page"
+        placeholder={t("pagination.page")}
       />
-      <span className="text-sm text-gray-700">/ {totalPages}</span>
+      <span className="text-sm text-gray-700">
+        {t("pagination.of")} {totalPages}
+      </span>
     </div>
   );
 }
@@ -255,18 +276,22 @@ export function PageSize({
   onSetPageSize,
   pagination,
   label,
+  translations = defaultTranslations,
 }: {
   onSetPageSize: (size: number) => void;
   pageSize: number;
   className?: string;
   pagination: PaginationOptions;
   label?: string;
+  translations?: TableTranslations;
 }) {
+  const t = createTranslator(translations);
+
   return (
     <div className={cn("flex items-center gap-2", className)}>
       {label && (
         <span className="text-sm truncate text-gray-700">
-          {label || "Rows per page:"}
+          {label || t("pagination.rowsPerPage")}
         </span>
       )}
       <Select

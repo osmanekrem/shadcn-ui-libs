@@ -25,6 +25,20 @@ export {
   CSP_DIRECTIVES,
 } from "./lib/security";
 
+// Internationalization
+export {
+  defaultTranslations,
+  turkishTranslations,
+  spanishTranslations,
+  frenchTranslations,
+  germanTranslations,
+  availableLanguages,
+  createTranslator,
+  t,
+  interpolate,
+} from "./lib/i18n";
+export type { TableTranslations, SupportedLanguage } from "./lib/i18n";
+
 // Types
 export type {
   Column,

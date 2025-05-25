@@ -57,6 +57,7 @@ import {
   validateSortingParams,
   RateLimiter,
 } from "../../../lib/security";
+import { defaultTranslations, createTranslator } from "../../../lib/i18n";
 
 declare module "@tanstack/react-table" {
   //add fuzzy filter to the filterFns
@@ -117,6 +118,12 @@ export function DataTable<TData>({
   // Rate limiter for lazy loading
   const rateLimiter = useMemo(() => new RateLimiter(10, 1000), []); // 10 requests per second
 
+  // Create translator function
+  const t = useMemo(() => {
+    const translations = tableOptions.translations || defaultTranslations;
+    return createTranslator(translations);
+  }, [tableOptions.translations]);
+
   const [showFilter, setShowFilter] = useState<boolean>(false);
 
   const columns = useMemo(() => {
@@ -134,7 +141,7 @@ export function DataTable<TData>({
                   onCheckedChange={(value) =>
                     table.toggleAllPageRowsSelected(!!value)
                   }
-                  aria-label="Select all"
+                  aria-label={t("selection.selectAll")}
                 />
               ),
               className: "!w-8 flex-none order-[-1]",
@@ -144,7 +151,7 @@ export function DataTable<TData>({
                   onCheckedChange={(value) => {
                     row.toggleSelected(!!value);
                   }}
-                  aria-label="Select row"
+                  aria-label={t("selection.selectRow")}
                 />
               ),
               enableSorting: false,
@@ -159,7 +166,7 @@ export function DataTable<TData>({
         : []),
       ...(tableOptions.columns || []),
     ];
-  }, [tableOptions.columns, tableOptions.rowSelection]);
+  }, [tableOptions.columns, tableOptions.rowSelection, t]);
   const data = useMemo(() => tableOptions.data, [tableOptions.data]);
 
   const filterFn: FilterFn<any> = useCallback((row, columnId, filterValue) => {
@@ -422,14 +429,14 @@ export function DataTable<TData>({
                 table.setGlobalFilter(sanitizedValue);
               }}
               className=""
-              placeholder="Search all columns..."
+              placeholder={t("filters.searchAllColumns")}
               maxLength={500}
               type="search"
             />
           )}
           {tableOptions.filter && (
             <button onClick={() => setShowFilter(!showFilter)}>
-              {showFilter ? "Hide Filter" : "Show Filter"}
+              {showFilter ? t("filters.hideFilter") : t("filters.showFilter")}
             </button>
           )}
         </div>
@@ -479,6 +486,7 @@ export function DataTable<TData>({
                             <div className="flex w-full py-1 justify-start items-center">
                               <FilterInput
                                 column={header.column as Column<TData>}
+                                translations={tableOptions.translations}
                               />
                             </div>
                           ) : null}
@@ -578,7 +586,9 @@ export function DataTable<TData>({
                         <span key="total">
                           {(
                             tableOptions.pagination!.totalLabel ||
-                            "Total: {total}"
+                            t("pagination.totalRecords", {
+                              total: table.getFilteredRowModel().rows.length,
+                            })
                           )?.replace(
                             "{total}",
                             String(table.getFilteredRowModel().rows.length)
@@ -595,6 +605,7 @@ export function DataTable<TData>({
                             }}
                             pageSize={table.getState().pagination.pageSize}
                             label={tableOptions.pagination!.pageSizeLabel}
+                            translations={tableOptions.translations}
                           />
                         )
                       );
@@ -608,6 +619,7 @@ export function DataTable<TData>({
                             table.setPageIndex(pageIndex)
                           }
                           totalPages={table.getPageCount()}
+                          translations={tableOptions.translations}
                         />
                       );
                     case "buttons":
@@ -627,6 +639,7 @@ export function DataTable<TData>({
                             tableOptions.pagination!.maxVisiblePages
                           }
                           mode={tableOptions.pagination!.mode}
+                          translations={tableOptions.translations}
                         />
                       );
                   }
