@@ -37,7 +37,7 @@ export function DraggableHeader<T>({
     transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
     transition: "width transform 0.2s ease-in-out",
     whiteSpace: "nowrap",
-    width: header.column.getSize(),
+    minWidth: header.column.getSize(),
     zIndex: isDragging ? 1 : 0,
   };
 
@@ -113,7 +113,7 @@ export function DraggableTableCell<T>({
     position: "relative",
     transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
     transition: "width transform 0.2s ease-in-out",
-    width: cell.column.getSize(),
+    minWidth: cell.column.getSize(),
     zIndex: isDragging ? 1 : 0,
   };
 
@@ -123,7 +123,8 @@ export function DraggableTableCell<T>({
       ref={setNodeRef}
       className={cn(
         (cell.column.columnDef as ColumnDef<T>).className,
-        colClassName
+        colClassName,
+        "flex items-center justify-start overflow-hidden gap-1.5 whitespace-nowrap text-ellipsis"
       )}
     >
       {flexRender(cell.column.columnDef.cell, cell.getContext())}

@@ -182,6 +182,7 @@ export const Default: Story = {
       data: defaultData,
       columns: columns,
       filter: true,
+      showFilterButton: true,
     } as TableOptions<Person>,
 
     className: "w-full flex flex-col min-w-screen",
@@ -1005,5 +1006,31 @@ const customTranslations: TableTranslations = {
         </div>
       )}
     </div>
+  );
+};
+
+export const ColumnVisibility = () => {
+  const [data, setData] = useState<Person[]>(defaultData);
+  const [columnVisibility, setColumnVisibility] = useState<
+    Record<string, boolean>
+  >({
+    firstName: true,
+    lastName: true,
+    age: true,
+    visits: true,
+    status: true,
+    progress: true,
+    isActive: true,
+  });
+
+  return (
+    <DataTable<Person>
+      tableOptions={{
+        data,
+        columns,
+        columnVisibility,
+        onColumnVisibilityChange: setColumnVisibility,
+      }}
+    />
   );
 };

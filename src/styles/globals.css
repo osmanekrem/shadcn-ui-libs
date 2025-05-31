@@ -29,12 +29,38 @@
   table {
     display: flex;
     flex-direction: column;
+    table-layout: fixed;
+    width: 100%;
   }
 
   tr {
     display: flex;
     flex-direction: row;
-    width: 100%;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  th,
+  td {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Ensure columns fill the entire table width */
+  .opal-datatable table {
+    min-width: 100%;
+  }
+
+  .opal-datatable th,
+  .opal-datatable td {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  /* Ensure table rows fill full width */
+  .opal-datatable tr {
+    min-width: 100%;
   }
 
   :root {

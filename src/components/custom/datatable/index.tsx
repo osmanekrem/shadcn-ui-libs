@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -29,7 +29,6 @@ import {
 } from "../../ui/table";
 import { fuzzyFilter, fuzzySort, useExternalState } from "./actions";
 import ColumnVisibility from "../column-visibility";
-import { ArrowDownUp, SortAsc, SortDesc } from "lucide-react";
 import Pagination, { GoToPage, PageSize } from "../pagination";
 
 import {
@@ -58,6 +57,7 @@ import {
   RateLimiter,
 } from "../../../lib/security";
 import { defaultTranslations, createTranslator } from "../../../lib/i18n";
+import { Button } from "../../ui/button";
 
 declare module "@tanstack/react-table" {
   //add fuzzy filter to the filterFns
@@ -123,8 +123,6 @@ export function DataTable<TData>({
     const translations = tableOptions.translations || defaultTranslations;
     return createTranslator(translations);
   }, [tableOptions.translations]);
-
-  const [showFilter, setShowFilter] = useState<boolean>(false);
 
   const columns = useMemo(() => {
     return [
@@ -259,6 +257,12 @@ export function DataTable<TData>({
     tableOptions.columnSizing,
     tableOptions.onColumnSizingChange,
     {}
+  );
+
+  const [showFilter, setShowFilter] = useExternalState(
+    tableOptions.showFilter,
+    tableOptions.onShowFilterChange,
+    false
   );
 
   useEffect(() => {
@@ -397,17 +401,94 @@ export function DataTable<TData>({
     useSensor(KeyboardSensor, {})
   );
 
+  // Add ref for table container
+  const tableContainerRef = useRef<HTMLDivElement>(null);
+  const [tableWidth, setTableWidth] = useState<number>(0);
+
   // Calculate column widths for CSS variables (performance optimization)
   const columnSizeVars = useMemo(() => {
     const headers = table.getFlatHeaders();
     const colSizes: { [key: string]: number } = {};
+
+    // Calculate total column width and minimum widths
+    let totalColumnWidth = 0;
+    let totalMinWidth = 0;
+    const columnData: Array<{
+      header: any;
+      currentSize: number;
+      minSize: number;
+    }> = [];
+
     for (let i = 0; i < headers.length; i++) {
       const header = headers[i]!;
-      colSizes[`--header-${header.id}-size`] = header.getSize();
-      colSizes[`--col-${header.column.id}-size`] = header.column.getSize();
+      const currentSize = header.getSize();
+      const minSize = header.column.columnDef.minSize || 20;
+
+      columnData.push({ header, currentSize, minSize });
+      totalColumnWidth += currentSize;
+      totalMinWidth += minSize;
     }
+
+    // Check if we should fill table width (default to true)
+    const shouldFillTableWidth = tableOptions.fillTableWidth !== false;
+
+    // If table width is available and total column width is less than table width,
+    // distribute the extra space proportionally while respecting minimum widths
+    if (
+      shouldFillTableWidth &&
+      tableWidth > 0 &&
+      totalColumnWidth < tableWidth &&
+      totalMinWidth <= tableWidth
+    ) {
+      const extraSpace = tableWidth - totalColumnWidth;
+      const distributableSpace = tableWidth - totalMinWidth;
+
+      for (const { header, currentSize, minSize } of columnData) {
+        // Calculate proportional distribution of extra space
+        const proportion =
+          (currentSize - minSize) / (totalColumnWidth - totalMinWidth);
+        const additionalSpace =
+          distributableSpace > 0 ? distributableSpace * proportion : 0;
+        const adjustedSize = Math.max(
+          minSize,
+          Math.floor(minSize + additionalSpace)
+        );
+
+        colSizes[`--header-${header.id}-size`] = adjustedSize;
+        colSizes[`--col-${header.column.id}-size`] = adjustedSize;
+      }
+    } else {
+      // Use original sizes if no adjustment needed
+      for (const { header, currentSize } of columnData) {
+        colSizes[`--header-${header.id}-size`] = currentSize;
+        colSizes[`--col-${header.column.id}-size`] = currentSize;
+      }
+    }
+
     return colSizes;
-  }, [table.getState().columnSizingInfo, table.getState().columnSizing]);
+  }, [
+    table.getState().columnSizingInfo,
+    table.getState().columnSizing,
+    tableWidth,
+    tableOptions.fillTableWidth,
+  ]);
+
+  // Add resize observer to track table width
+  useEffect(() => {
+    if (!tableContainerRef.current) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setTableWidth(entry.contentRect.width);
+      }
+    });
+
+    resizeObserver.observe(tableContainerRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   return (
     <DndContext
@@ -416,32 +497,42 @@ export function DataTable<TData>({
       onDragEnd={handleDragEnd}
       sensors={sensors}
     >
-      <div className={`opal-datatable ${className}`} style={columnSizeVars}>
-        <div>
-          {tableOptions.globalFilter?.show && (
-            <DebouncedInput
-              value={globalFilter ?? ""}
-              onChange={(value) => {
-                const sanitizedValue =
-                  typeof value === "string"
-                    ? sanitizeSearchInput(value)
-                    : String(value);
-                table.setGlobalFilter(sanitizedValue);
-              }}
-              className=""
-              placeholder={t("filters.searchAllColumns")}
-              maxLength={500}
-              type="search"
-            />
-          )}
-          {tableOptions.filter && (
-            <button onClick={() => setShowFilter(!showFilter)}>
-              {showFilter ? t("filters.hideFilter") : t("filters.showFilter")}
-            </button>
-          )}
+      <div
+        className={`opal-datatable flex flex-col gap-2 ${className}`}
+        style={columnSizeVars}
+      >
+        <div className="flex flex-row gap-2 justify-between">
+          <div className="flex flex-row gap-2">
+            {tableOptions.globalFilter?.show && (
+              <DebouncedInput
+                value={globalFilter ?? ""}
+                onChange={(value) => {
+                  const sanitizedValue =
+                    typeof value === "string"
+                      ? sanitizeSearchInput(value)
+                      : String(value);
+                  table.setGlobalFilter(sanitizedValue);
+                }}
+                className=""
+                placeholder={t("filters.searchAllColumns")}
+                maxLength={500}
+                type="search"
+              />
+            )}
+            {tableOptions.filter && tableOptions.showFilterButton && (
+              <Button onClick={() => setShowFilter(!showFilter)}>
+                {showFilter ? t("filters.hideFilter") : t("filters.showFilter")}
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-row gap-2">
+            {tableOptions.columnVisibility && (
+              <ColumnVisibility table={table} />
+            )}
+          </div>
         </div>
-        <div className="flex flex-col">
-          <TableComponent>
+        <div className="flex flex-col" ref={tableContainerRef}>
+          <TableComponent style={{ tableLayout: "fixed", width: "100%" }}>
             <TableHeaderComponent>
               {table.getHeaderGroups().map((headerGroup) => (
                 <>
@@ -569,8 +660,8 @@ export function DataTable<TData>({
               </TableFooterComponent>
             )}
           </TableComponent>
-          <div className="flex items-center justify-between py-4">
-            {tableOptions.pagination && (
+          {tableOptions.pagination && (
+            <div className="flex items-center justify-between py-4">
               <div className="flex flex-wrap items-center justify-between gap-4 px-2 text-sm">
                 {(
                   tableOptions.pagination.layout || [
@@ -645,9 +736,8 @@ export function DataTable<TData>({
                   }
                 })}
               </div>
-            )}
-          </div>
-          <ColumnVisibility table={table} />
+            </div>
+          )}
         </div>
       </div>
     </DndContext>

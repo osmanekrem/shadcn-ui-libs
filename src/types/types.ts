@@ -19,13 +19,14 @@ export type TableOptions<T> = {
   colClassName?: string;
   filter?: boolean;
   reorderable?: boolean;
-
+  showFilterButton?: boolean;
   pagination?: PaginationOptions;
 
   // Column sizing options
   enableColumnResizing?: boolean;
   columnResizeMode?: "onChange" | "onEnd";
   columnResizeDirection?: "ltr" | "rtl";
+  fillTableWidth?: boolean;
 
   // Internationalization
   translations?: TableTranslations;
@@ -36,7 +37,8 @@ export type TableOptions<T> = {
   ColumnVisibility &
   ColumnOrder &
   RowSelection &
-  ColumnSizing;
+  ColumnSizing &
+  ShowFilter;
 
 type ColumnVisibility =
   | {
@@ -108,6 +110,16 @@ type RowSelection =
       rowSelection?: never;
       onRowSelectionChange?: never;
       enableRowSelectionFn?: never;
+    };
+
+type ShowFilter =
+  | {
+      showFilter?: boolean;
+      onShowFilterChange?: (show: boolean) => void;
+    }
+  | {
+      showFilter?: never;
+      onShowFilterChange?: never;
     };
 
 type GlobalFilterType = {

@@ -27,15 +27,29 @@ function DebouncedInput({
   maxLength = 1000,
   ...props
 }: {
-  value: string | number;
-  onChange: (value: string | number) => void;
+  value: string | number | undefined;
+  onChange: (value: string | number | undefined) => void;
   debounce?: number;
 } & Omit<InputHTMLAttributes<HTMLInputElement>, "onChange">) {
   const [value, setValue] = useState(initialValue);
   const [isMounted, setIsMounted] = useState(false);
   const checkRateLimit = useRateLimit();
+  const previousValueRef = useRef<string | number | undefined>(initialValue);
 
   useEffect(() => {
+    if (type === "number") {
+      const numValue = Number(initialValue);
+      if (
+        isNaN(numValue) ||
+        initialValue === null ||
+        initialValue === undefined ||
+        initialValue === ""
+      ) {
+        previousValueRef.current = undefined;
+      } else {
+        previousValueRef.current = numValue;
+      }
+    }
     setValue(initialValue);
   }, [initialValue]);
 
@@ -52,7 +66,12 @@ function DebouncedInput({
     }
 
     const timeout = setTimeout(() => {
-      let sanitizedValue = value;
+      let sanitizedValue:
+        | string
+        | number
+        | undefined
+        | (string & readonly string[])
+        | (number & readonly string[]) = value;
 
       // Sanitize based on input type
       if (type === "text" || type === "search") {
@@ -62,15 +81,23 @@ function DebouncedInput({
             : String(value);
       } else if (type === "number") {
         const numValue = Number(value);
-        if (isNaN(numValue)) {
-          sanitizedValue = 0;
+        if (
+          isNaN(numValue) ||
+          value === null ||
+          value === undefined ||
+          value === ""
+        ) {
+          sanitizedValue = undefined;
         } else {
-          // Prevent extremely large numbers that could cause issues
           sanitizedValue = Math.max(-1000000, Math.min(1000000, numValue));
         }
       }
 
-      onChange(sanitizedValue);
+      // Only call onChange if the value has actually changed
+      if (sanitizedValue !== previousValueRef.current) {
+        previousValueRef.current = sanitizedValue;
+        onChange(sanitizedValue);
+      }
     }, debounce);
 
     return () => clearTimeout(timeout);

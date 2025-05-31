@@ -84,16 +84,19 @@ function FilterInput<T>({
           value={(sanitizedFilterValue as [number, number])?.[0] ?? ""}
           onChange={(value) => {
             // Validate and sanitize numeric input
-            const numValue = value === "" ? undefined : Number(value);
+            const numValue =
+              value === "" || value === null || value === undefined
+                ? undefined
+                : Number(value);
+
             if (
               numValue !== undefined &&
               (isNaN(numValue) || numValue < -1000000 || numValue > 1000000)
             ) {
               return; // Reject invalid values
             }
-
             column.setFilterValue((old: [number, number]) => {
-              if (value === "" && old?.[1] === undefined) {
+              if (numValue === undefined && old?.[1] === undefined) {
                 return undefined;
               }
               return [numValue, old?.[1]];
@@ -125,16 +128,18 @@ function FilterInput<T>({
           value={(sanitizedFilterValue as [number, number])?.[1] ?? ""}
           onChange={(value) => {
             // Validate and sanitize numeric input
-            const numValue = value === "" ? undefined : Number(value);
+            const numValue =
+              value === "" || value === null || value === undefined
+                ? undefined
+                : Number(value);
             if (
               numValue !== undefined &&
               (isNaN(numValue) || numValue < -1000000 || numValue > 1000000)
             ) {
               return; // Reject invalid values
             }
-
             column.setFilterValue((old: [number, number]) => {
-              if (value === "" && old?.[0] === undefined) {
+              if (numValue === undefined && old?.[0] === undefined) {
                 return undefined;
               }
               return [old?.[0], numValue];
