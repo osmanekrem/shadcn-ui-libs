@@ -26,19 +26,29 @@ export function DraggableHeader<T>({
   reorderable = false,
   enableColumnResizing = false,
 }: DraggableHeaderProps<T>) {
+  const isSelectionColumn = header.column.id === "selection";
+
   const { attributes, isDragging, listeners, setNodeRef, transform } =
     useSortable({
       id: header.column.id,
+      disabled: isSelectionColumn || !reorderable,
     });
 
   const style: CSSProperties = {
     opacity: isDragging ? 0.8 : 1,
     position: "relative",
-    transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
-    transition: "width transform 0.2s ease-in-out",
-    whiteSpace: "nowrap",
-    minWidth: header.column.getSize(),
+    transform: isSelectionColumn
+      ? undefined
+      : CSS.Translate.toString(transform),
+    transition: isSelectionColumn
+      ? undefined
+      : isDragging
+        ? "none"
+        : "transform 0.05s ease-out",
     zIndex: isDragging ? 1 : 0,
+    width: header.getSize(),
+    minWidth: header.column.columnDef.minSize || 100,
+    maxWidth: header.column.columnDef.maxSize || "none",
   };
 
   return (
@@ -60,34 +70,43 @@ export function DraggableHeader<T>({
         colClassName,
         !!(header.column.columnDef as ColumnDef<T>).enableSorting &&
           "cursor-pointer select-none",
-        "flex items-center justify-start overflow-hidden gap-1.5 whitespace-nowrap text-ellipsis",
-        enableColumnResizing && "relative"
+        "relative",
+        enableColumnResizing && "group"
       )}
     >
       {header.isPlaceholder ? null : (
         <>
-          <div className="flex items-center justify-start gap-1.5 flex-1 min-w-0">
-            {flexRender(header.column.columnDef.header, header.getContext())}
-            {(!!(header.column.columnDef as ColumnDef<T>).enableSorting &&
-              {
-                asc: <SortAsc className="inline size-4" />,
-                desc: <SortDesc className="inline size-4" />,
-              }[header.column.getIsSorted() as string]) ?? (
-              <ArrowDownUp className="inline size-4" />
-            )}
+          <div className="flex items-center justify-between gap-2 w-full">
+            <div className="flex items-center gap-1 flex-1 min-w-0">
+              <span className="truncate">
+                {flexRender(
+                  header.column.columnDef.header,
+                  header.getContext()
+                )}
+              </span>
+              {(!!(header.column.columnDef as ColumnDef<T>).enableSorting &&
+                {
+                  asc: <SortAsc className="inline size-4 flex-shrink-0" />,
+                  desc: <SortDesc className="inline size-4 flex-shrink-0" />,
+                }[header.column.getIsSorted() as string]) ?? (
+                <ArrowDownUp className="inline size-4 flex-shrink-0" />
+              )}
+            </div>
+            {reorderable &&
+              header.column.id !== "selection" &&
+              ((header.column.columnDef as ColumnDef<T>).reorderable ??
+                true) && (
+                <Button
+                  variant="ghost"
+                  className="size-6 p-0 flex-shrink-0"
+                  {...attributes}
+                  {...listeners}
+                >
+                  <span className="sr-only">Drag to reorder</span>
+                  <MenuIcon className="size-4" />
+                </Button>
+              )}
           </div>
-          {reorderable &&
-            ((header.column.columnDef as ColumnDef<T>).reorderable ?? true) && (
-              <Button
-                variant="ghost"
-                className="ml-auto size-4 flex shrink-0"
-                {...attributes}
-                {...listeners}
-              >
-                <span className="sr-only">Drag to reorder</span>
-                <MenuIcon className=" size-4" />
-              </Button>
-            )}
           {enableColumnResizing && <ColumnResizeHandle header={header} />}
         </>
       )}
@@ -104,17 +123,28 @@ export function DraggableTableCell<T>({
   colClassName?: string;
   TableCellComponent?: React.ElementType;
 }) {
+  const isSelectionColumn = cell.column.id === "selection";
+
   const { isDragging, setNodeRef, transform } = useSortable({
     id: cell.column.id,
+    disabled: isSelectionColumn,
   });
 
   const style: CSSProperties = {
     opacity: isDragging ? 0.8 : 1,
     position: "relative",
-    transform: CSS.Translate.toString(transform), // translate instead of transform to avoid squishing
-    transition: "width transform 0.2s ease-in-out",
-    minWidth: cell.column.getSize(),
+    transform: isSelectionColumn
+      ? undefined
+      : CSS.Translate.toString(transform),
+    transition: isSelectionColumn
+      ? undefined
+      : isDragging
+        ? "none"
+        : "transform 0.05s ease-out",
     zIndex: isDragging ? 1 : 0,
+    width: cell.column.getSize(),
+    minWidth: cell.column.columnDef.minSize || 100,
+    maxWidth: cell.column.columnDef.maxSize || "none",
   };
 
   return (
@@ -123,11 +153,12 @@ export function DraggableTableCell<T>({
       ref={setNodeRef}
       className={cn(
         (cell.column.columnDef as ColumnDef<T>).className,
-        colClassName,
-        "flex items-center justify-start overflow-hidden gap-1.5 whitespace-nowrap text-ellipsis"
+        colClassName
       )}
     >
-      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+      <div className="truncate">
+        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+      </div>
     </TableCellComponent>
   );
 }

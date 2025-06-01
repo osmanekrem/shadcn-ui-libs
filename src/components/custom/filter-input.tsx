@@ -68,7 +68,7 @@ function FilterInput<T>({
         : maxLimit;
 
     return (
-      <div className="flex space-x-1.5">
+      <div className="flex space-x-1 w-full">
         <DebouncedInput
           type="number"
           min={
@@ -179,7 +179,7 @@ function FilterInput<T>({
           column.setFilterValue(sanitizedValue === "all" ? "" : sanitizedValue);
         }}
       >
-        <SelectTrigger className="h-8">
+        <SelectTrigger className="h-8 w-full">
           <SelectValue placeholder={sanitizeSearchInput(allLabel)} />
         </SelectTrigger>
         <SelectContent>
@@ -219,7 +219,7 @@ function FilterInput<T>({
           column.setFilterValue(value === "all" ? "" : value);
         }}
       >
-        <SelectTrigger className="h-8">
+        <SelectTrigger className="h-8 w-full">
           <SelectValue placeholder={sanitizeSearchInput(allLabel)} />
         </SelectTrigger>
         <SelectContent>

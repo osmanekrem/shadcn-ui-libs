@@ -27,24 +27,26 @@
 
 @layer base {
   table {
-    display: flex;
-    flex-direction: column;
+    display: table;
     table-layout: fixed;
     width: 100%;
+    border-collapse: collapse;
   }
 
   tr {
-    display: flex;
-    flex-direction: row;
-    width: max-content;
-    min-width: 100%;
+    display: table-row;
+    width: 100%;
   }
 
   th,
   td {
-    flex: 1;
+    display: table-cell;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+    padding: 0.5rem;
+    vertical-align: middle;
+    position: relative;
   }
 
   /* Ensure columns fill the entire table width */
@@ -60,7 +62,7 @@
 
   /* Ensure table rows fill full width */
   .opal-datatable tr {
-    min-width: 100%;
+    width: 100%;
   }
 
   :root {

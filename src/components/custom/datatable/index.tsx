@@ -11,6 +11,7 @@ import {
   getFacetedMinMaxValues,
   FilterFn,
   SortingFn,
+  Header,
 } from "@tanstack/react-table";
 import FilterInput from "../filter-input";
 import { Column, ColumnDef, TableOptions } from "../../../types/types";
@@ -46,18 +47,81 @@ import {
   arrayMove,
   SortableContext,
   horizontalListSortingStrategy,
+  useSortable,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { DraggableHeader, DraggableTableCell } from "../draggable-header";
 import { Checkbox } from "../../ui/checkbox";
-import React from "react";
+import React, { CSSProperties } from "react";
 import {
   sanitizeSearchInput,
   validatePaginationParams,
   validateSortingParams,
   RateLimiter,
 } from "../../../lib/security";
-import { defaultTranslations, createTranslator } from "../../../lib/i18n";
+import {
+  defaultTranslations,
+  createTranslator,
+  TableTranslations,
+} from "../../../lib/i18n";
 import { Button } from "../../ui/button";
+
+// DraggableFilterCell component for filter row
+function DraggableFilterCell<TData>({
+  header,
+  colClassName = "",
+  TableHeadComponent,
+  translations,
+  isTableDragging = false,
+}: {
+  header: Header<TData, unknown>;
+  colClassName?: string;
+  TableHeadComponent: React.ElementType;
+  translations?: TableTranslations;
+  isTableDragging?: boolean;
+}) {
+  const { isDragging, setNodeRef, transform } = useSortable({
+    id: header.column.id,
+  });
+
+  const style: React.CSSProperties = {
+    opacity: isDragging ? 0.8 : 1,
+    position: "relative",
+    transform: CSS.Translate.toString(transform),
+    transition:
+      isDragging || isTableDragging ? "none" : "transform 0.05s ease-out",
+    zIndex: isDragging ? 1 : 0,
+    width: header.getSize(),
+    minWidth: header.column.columnDef.minSize || 100,
+    maxWidth: header.column.columnDef.maxSize || "none",
+  };
+
+  return (
+    <TableHeadComponent
+      key={header.column.id}
+      colSpan={header.colSpan}
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        (header.column.columnDef as ColumnDef<TData>).headerClassName,
+        (header.column.columnDef as ColumnDef<TData>).className,
+        colClassName
+      )}
+    >
+      <div className="w-full">
+        {flexRender(
+          header.isPlaceholder ? null : header.column.getCanFilter() ? (
+            <FilterInput
+              column={header.column as Column<TData>}
+              translations={translations}
+            />
+          ) : null,
+          header.getContext()
+        )}
+      </div>
+    </TableHeadComponent>
+  );
+}
 
 declare module "@tanstack/react-table" {
   //add fuzzy filter to the filterFns
@@ -142,7 +206,7 @@ export function DataTable<TData>({
                   aria-label={t("selection.selectAll")}
                 />
               ),
-              className: "!w-8 flex-none order-[-1]",
+              className: "!w-8 flex-none",
               cell: ({ row }) => (
                 <Checkbox
                   checked={row.getIsSelected()}
@@ -238,7 +302,9 @@ export function DataTable<TData>({
   const [columnOrder, onColumnOrderChange] = useExternalState(
     tableOptions.columnOrder,
     tableOptions.onColumnOrderChange,
-    tableOptions.columns.map((col) => col.id!)
+    tableOptions.columns
+      .map((col) => col.id!)
+      .filter((id) => id !== "selection")
   );
 
   const [globalFilter, onGlobalFilterChange] = useExternalState(
@@ -264,6 +330,9 @@ export function DataTable<TData>({
     tableOptions.onShowFilterChange,
     false
   );
+
+  // Track drag state to prevent animations during drag operations
+  const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
     if (tableOptions.lazy) {
@@ -324,7 +393,9 @@ export function DataTable<TData>({
       globalFilter,
       sorting,
       columnVisibility,
-      columnOrder,
+      columnOrder: tableOptions.rowSelection
+        ? ["selection", ...columnOrder]
+        : columnOrder,
       pagination,
       rowSelection,
       columnSizing,
@@ -381,19 +452,60 @@ export function DataTable<TData>({
     },
   });
 
+  // Memoize sortable items to ensure consistency
+  const sortableItems = useMemo(() => {
+    const tableColumnOrder = table.getState().columnOrder || [];
+    const nonSelectionColumns = tableColumnOrder.filter(
+      (id) => id !== "selection"
+    );
+
+    return nonSelectionColumns;
+  }, [table.getState().columnOrder]);
+
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
       const { active, over } = event;
+
+      // Reset drag state
+      setIsDragging(false);
+
       if (active && over && active.id !== over.id) {
-        onColumnOrderChange((columnOrder) => {
-          const oldIndex = columnOrder.indexOf(active.id as string);
-          const newIndex = columnOrder.indexOf(over.id as string);
-          return arrayMove(columnOrder, oldIndex, newIndex);
-        });
+        // Prevent moving the selection column
+        if (active.id === "selection") {
+          return;
+        }
+
+        // Get current column order immediately
+        const currentColumnOrder = table.getState().columnOrder || [];
+        const nonSelectionColumns = currentColumnOrder.filter(
+          (id) => id !== "selection"
+        );
+
+        const oldIndex = nonSelectionColumns.indexOf(active.id as string);
+        const newIndex = nonSelectionColumns.indexOf(over.id as string);
+
+        if (oldIndex === -1 || newIndex === -1) {
+          console.warn("Invalid indices", { oldIndex, newIndex });
+          return;
+        }
+
+        // Calculate new order
+        const reorderedArray = arrayMove(
+          nonSelectionColumns,
+          oldIndex,
+          newIndex
+        );
+
+        // Update column order immediately
+        onColumnOrderChange(reorderedArray);
       }
     },
-    [onColumnOrderChange]
+    [onColumnOrderChange, table]
   );
+
+  const handleDragStart = useCallback(() => {
+    setIsDragging(true);
+  }, []);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {}),
@@ -403,104 +515,16 @@ export function DataTable<TData>({
 
   // Add ref for table container
   const tableContainerRef = useRef<HTMLDivElement>(null);
-  const [tableWidth, setTableWidth] = useState<number>(0);
-
-  // Calculate column widths for CSS variables (performance optimization)
-  const columnSizeVars = useMemo(() => {
-    const headers = table.getFlatHeaders();
-    const colSizes: { [key: string]: number } = {};
-
-    // Calculate total column width and minimum widths
-    let totalColumnWidth = 0;
-    let totalMinWidth = 0;
-    const columnData: Array<{
-      header: any;
-      currentSize: number;
-      minSize: number;
-    }> = [];
-
-    for (let i = 0; i < headers.length; i++) {
-      const header = headers[i]!;
-      const currentSize = header.getSize();
-      const minSize = header.column.columnDef.minSize || 20;
-
-      columnData.push({ header, currentSize, minSize });
-      totalColumnWidth += currentSize;
-      totalMinWidth += minSize;
-    }
-
-    // Check if we should fill table width (default to true)
-    const shouldFillTableWidth = tableOptions.fillTableWidth !== false;
-
-    // If table width is available and total column width is less than table width,
-    // distribute the extra space proportionally while respecting minimum widths
-    if (
-      shouldFillTableWidth &&
-      tableWidth > 0 &&
-      totalColumnWidth < tableWidth &&
-      totalMinWidth <= tableWidth
-    ) {
-      const extraSpace = tableWidth - totalColumnWidth;
-      const distributableSpace = tableWidth - totalMinWidth;
-
-      for (const { header, currentSize, minSize } of columnData) {
-        // Calculate proportional distribution of extra space
-        const proportion =
-          (currentSize - minSize) / (totalColumnWidth - totalMinWidth);
-        const additionalSpace =
-          distributableSpace > 0 ? distributableSpace * proportion : 0;
-        const adjustedSize = Math.max(
-          minSize,
-          Math.floor(minSize + additionalSpace)
-        );
-
-        colSizes[`--header-${header.id}-size`] = adjustedSize;
-        colSizes[`--col-${header.column.id}-size`] = adjustedSize;
-      }
-    } else {
-      // Use original sizes if no adjustment needed
-      for (const { header, currentSize } of columnData) {
-        colSizes[`--header-${header.id}-size`] = currentSize;
-        colSizes[`--col-${header.column.id}-size`] = currentSize;
-      }
-    }
-
-    return colSizes;
-  }, [
-    table.getState().columnSizingInfo,
-    table.getState().columnSizing,
-    tableWidth,
-    tableOptions.fillTableWidth,
-  ]);
-
-  // Add resize observer to track table width
-  useEffect(() => {
-    if (!tableContainerRef.current) return;
-
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setTableWidth(entry.contentRect.width);
-      }
-    });
-
-    resizeObserver.observe(tableContainerRef.current);
-
-    return () => {
-      resizeObserver.disconnect();
-    };
-  }, []);
 
   return (
     <DndContext
       collisionDetection={closestCenter}
       modifiers={[restrictToHorizontalAxis]}
       onDragEnd={handleDragEnd}
+      onDragStart={handleDragStart}
       sensors={sensors}
     >
-      <div
-        className={`opal-datatable flex flex-col gap-2 ${className}`}
-        style={columnSizeVars}
-      >
+      <div className={`opal-datatable flex flex-col gap-2 ${className}`}>
         <div className="flex flex-row gap-2 justify-between">
           <div className="flex flex-row gap-2">
             {tableOptions.globalFilter?.show && (
@@ -532,17 +556,17 @@ export function DataTable<TData>({
           </div>
         </div>
         <div className="flex flex-col" ref={tableContainerRef}>
-          <TableComponent style={{ tableLayout: "fixed", width: "100%" }}>
-            <TableHeaderComponent>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <>
-                  <TableRowComponent
-                    key={"header_" + headerGroup.id}
-                    className={cn(tableOptions.rowClassName)}
-                  >
-                    <SortableContext
-                      items={columnOrder}
-                      strategy={horizontalListSortingStrategy}
+          <SortableContext
+            items={sortableItems}
+            strategy={horizontalListSortingStrategy}
+          >
+            <TableComponent style={{ tableLayout: "fixed", width: "100%" }}>
+              <TableHeaderComponent>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <>
+                    <TableRowComponent
+                      key={"header_" + headerGroup.id}
+                      className={cn(tableOptions.rowClassName)}
                     >
                       {headerGroup.headers.map((header) => {
                         return (
@@ -550,116 +574,149 @@ export function DataTable<TData>({
                             header={header}
                             colClassName={tableOptions.colClassName}
                             TableHeadComponent={TableHeadComponent}
-                            key={header.id}
-                            reorderable={tableOptions.reorderable}
+                            key={header.column.id}
+                            reorderable={
+                              header.column.id === "selection"
+                                ? false
+                                : tableOptions.reorderable
+                            }
                             enableColumnResizing={
                               tableOptions.enableColumnResizing
                             }
                           />
                         );
                       })}
-                    </SortableContext>
-                  </TableRowComponent>
-                </>
-              ))}
+                    </TableRowComponent>
+                  </>
+                ))}
 
-              {showFilter && (
-                <TableRowComponent className={tableOptions.filterRowClassName}>
-                  {table.getHeaderGroups().map((headerGroup) =>
-                    headerGroup.headers.map((header) => {
-                      return (
-                        <TableHeadComponent
-                          key={header.id}
-                          colSpan={header.colSpan}
-                          style={{ width: `${header.getSize()}px` }}
-                        >
-                          {header.isPlaceholder ? null : header.column.getCanFilter() ? (
-                            <div className="flex w-full py-1 justify-start items-center">
-                              <FilterInput
-                                column={header.column as Column<TData>}
-                                translations={tableOptions.translations}
-                              />
-                            </div>
-                          ) : null}
-                        </TableHeadComponent>
-                      );
-                    })
-                  )}
-                </TableRowComponent>
-              )}
-            </TableHeaderComponent>
-            <TableBodyComponent>
-              {table.getRowModel().rows.map((row) => {
-                return (
+                {showFilter && (
                   <TableRowComponent
-                    key={row.id}
-                    className={tableOptions.filterRowClassName}
+                    className={cn(
+                      tableOptions.filterRowClassName,
+                      tableOptions.rowClassName
+                    )}
                   >
-                    {row.getVisibleCells().map((cell) => {
-                      return (
-                        <SortableContext
-                          key={cell.id}
-                          items={columnOrder}
-                          strategy={horizontalListSortingStrategy}
-                        >
+                    {table.getHeaderGroups().map((headerGroup) =>
+                      headerGroup.headers.map((header) => {
+                        // Render selection column filter
+                        if (header.column.id === "selection") {
+                          return (
+                            <TableHeadComponent
+                              key={header.column.id}
+                              colSpan={header.colSpan}
+                              style={{
+                                width: header.getSize(),
+                                minWidth:
+                                  header.column.columnDef.minSize || 100,
+                                maxWidth:
+                                  header.column.columnDef.maxSize || "none",
+                              }}
+                              className={cn(
+                                (header.column.columnDef as ColumnDef<TData>)
+                                  .headerClassName,
+                                (header.column.columnDef as ColumnDef<TData>)
+                                  .className,
+                                tableOptions.colClassName
+                              )}
+                            >
+                              <div className="w-full">
+                                {flexRender(
+                                  header.isPlaceholder ? null : header.column.getCanFilter() ? (
+                                    <FilterInput
+                                      column={header.column as Column<TData>}
+                                      translations={tableOptions.translations}
+                                    />
+                                  ) : null,
+                                  header.getContext()
+                                )}
+                              </div>
+                            </TableHeadComponent>
+                          );
+                        }
+
+                        return (
+                          <DraggableFilterCell<TData>
+                            header={header}
+                            colClassName={tableOptions.colClassName}
+                            TableHeadComponent={TableHeadComponent}
+                            translations={tableOptions.translations}
+                            isTableDragging={isDragging}
+                            key={header.column.id}
+                          />
+                        );
+                      })
+                    )}
+                  </TableRowComponent>
+                )}
+              </TableHeaderComponent>
+              <TableBodyComponent>
+                {table.getRowModel().rows.map((row) => {
+                  return (
+                    <TableRowComponent
+                      key={row.id}
+                      className={tableOptions.filterRowClassName}
+                    >
+                      {row.getVisibleCells().map((cell) => {
+                        return (
                           <DraggableTableCell<TData>
                             cell={cell}
                             colClassName={tableOptions.colClassName}
                             TableCellComponent={TableCellComponent}
-                            key={cell.id}
+                            key={cell.column.id}
                           />
-                        </SortableContext>
-                      );
-                    })}
-                  </TableRowComponent>
-                );
-              })}
-            </TableBodyComponent>
-            {table
-              .getAllLeafColumns()
-              .some(
-                (col) =>
-                  (col.columnDef as ColumnDef<TData>)?.footer !== undefined
-              ) && (
-              <TableFooterComponent>
-                {table.getFooterGroups().map((footerGroup) => {
-                  if (
-                    !footerGroup.headers.some(
-                      (header) =>
-                        (header.column.columnDef as ColumnDef<TData>)?.footer
-                    )
-                  ) {
-                    return null;
-                  }
-                  return (
-                    <TableRowComponent key={footerGroup.id}>
-                      {footerGroup.headers.map((header) => (
-                        <TableHeadComponent
-                          key={header.id}
-                          colSpan={header.colSpan}
-                          style={{ width: `${header.getSize()}px` }}
-                          className={cn(
-                            (header.column.columnDef as ColumnDef<TData>)
-                              ?.footerClassName,
-                            (header.column.columnDef as ColumnDef<TData>)
-                              .className,
-                            tableOptions.colClassName
-                          )}
-                        >
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.footer,
-                                header.getContext()
-                              )}
-                        </TableHeadComponent>
-                      ))}
+                        );
+                      })}
                     </TableRowComponent>
                   );
                 })}
-              </TableFooterComponent>
-            )}
-          </TableComponent>
+              </TableBodyComponent>
+              {table
+                .getAllLeafColumns()
+                .some(
+                  (col) =>
+                    (col.columnDef as ColumnDef<TData>)?.footer !== undefined
+                ) && (
+                <TableFooterComponent>
+                  {table.getFooterGroups().map((footerGroup) => {
+                    if (
+                      !footerGroup.headers.some(
+                        (header) =>
+                          (header.column.columnDef as ColumnDef<TData>)?.footer
+                      )
+                    ) {
+                      return null;
+                    }
+                    return (
+                      <TableRowComponent key={footerGroup.id}>
+                        {footerGroup.headers.map((header) => (
+                          <TableHeadComponent
+                            key={header.id}
+                            colSpan={header.colSpan}
+                            style={{ width: `${header.getSize()}px` }}
+                            className={cn(
+                              (header.column.columnDef as ColumnDef<TData>)
+                                ?.footerClassName,
+                              (header.column.columnDef as ColumnDef<TData>)
+                                .className,
+                              tableOptions.colClassName
+                            )}
+                          >
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.footer,
+                                  header.getContext()
+                                )}
+                          </TableHeadComponent>
+                        ))}
+                      </TableRowComponent>
+                    );
+                  })}
+                </TableFooterComponent>
+              )}
+            </TableComponent>
+          </SortableContext>
           {tableOptions.pagination && (
             <div className="flex items-center justify-between py-4">
               <div className="flex flex-wrap items-center justify-between gap-4 px-2 text-sm">
