@@ -38,9 +38,9 @@ import {
   MouseSensor,
   TouchSensor,
   closestCenter,
-  type DragEndEvent,
   useSensor,
   useSensors,
+  type DragEndEvent,
 } from "@dnd-kit/core";
 import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
 import {
@@ -50,6 +50,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+
 import { DraggableHeader, DraggableTableCell } from "../draggable-header";
 import { Checkbox } from "../../ui/checkbox";
 import React, { CSSProperties } from "react";

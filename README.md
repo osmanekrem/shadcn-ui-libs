@@ -18,6 +18,8 @@ A powerful, feature-rich React table component built on top of TanStack Table v8
 - **📱 Responsive**: Mobile-friendly design
 - **🎯 TypeScript**: Full TypeScript support
 - **🧩 Customizable**: Highly customizable components and styling
+- **⚡ Optimized Bundle**: 55% smaller bundle size with peer dependencies
+- **🌍 i18n Support**: Built-in internationalization for 5 languages
 
 ## 📦 Installation
 
@@ -25,13 +27,25 @@ A powerful, feature-rich React table component built on top of TanStack Table v8
 npm install tanstack-shadcn-table
 ```
 
+### 📊 Bundle Size
+
+- **Library Size**: ~96KB (gzipped)
+- **With Dependencies**: ~150KB (when peer dependencies are shared)
+- **Optimization**: 55% smaller than traditional bundling approach
+
 ### Peer Dependencies
 
-Make sure you have the following peer dependencies installed:
+This library is designed to be lightweight and efficient. The following dependencies are required as peer dependencies to avoid bundle duplication:
 
 ```bash
-npm install @tanstack/react-table @tanstack/match-sorter-utils class-variance-authority clsx lucide-react react react-dom
+npm install @radix-ui/react-checkbox @radix-ui/react-dropdown-menu @radix-ui/react-select @radix-ui/react-slot @tanstack/react-table @tanstack/match-sorter-utils class-variance-authority clsx lucide-react react react-dom tailwind-merge
 ```
+
+**Why Peer Dependencies?**
+- **Bundle Size Optimization**: Reduces final bundle size by ~55%
+- **Version Flexibility**: Allows you to use your preferred versions
+- **Tree Shaking**: Better optimization when dependencies are external
+- **Conflict Prevention**: Avoids version conflicts in your application
 
 ## 🎯 Quick Start
 

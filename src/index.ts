@@ -1,19 +1,19 @@
 // Styles
 import "./styles/globals.css";
 
-// Main Components
+// Main Components - Core functionality
 export {
   DataTable,
   fuzzyFilter,
   fuzzySort,
 } from "./components/custom/datatable";
 
-// Utility Components
+// Utility Components - Optional features
 export { default as DebouncedInput } from "./components/custom/debounced-input";
 export { default as FilterInput } from "./components/custom/filter-input";
 export { default as ColumnResizeHandle } from "./components/custom/column-resize-handle";
 
-// Security Utilities
+// Security Utilities - Optional security features
 export {
   sanitizeHtml,
   sanitizeSearchInput,
@@ -25,7 +25,7 @@ export {
   CSP_DIRECTIVES,
 } from "./lib/security";
 
-// Internationalization
+// Internationalization - Optional i18n features
 export {
   defaultTranslations,
   turkishTranslations,
