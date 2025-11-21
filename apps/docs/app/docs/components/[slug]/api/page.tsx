@@ -81,10 +81,7 @@ const components = {
   ),
   table: (props: React.HTMLAttributes<HTMLTableElement>) => (
     <div className="my-6 w-full overflow-y-auto">
-      <table
-        className="w-full border-collapse border border-border"
-        {...props}
-      />
+      <table className="w-full border-collapse border border-border" {...props} />
     </div>
   ),
   thead: (props: React.HTMLAttributes<HTMLTableSectionElement>) => (
@@ -124,7 +121,7 @@ const components = {
 
 async function getMDXContent(slug: string) {
   try {
-    const filePath = join(process.cwd(), "app/docs/components", `${slug}.mdx`);
+    const filePath = join(process.cwd(), "app/docs/components", `${slug}.api.mdx`);
     const content = await readFile(filePath, "utf-8");
     return content;
   } catch (error) {
@@ -132,7 +129,7 @@ async function getMDXContent(slug: string) {
   }
 }
 
-export default async function ComponentPage({
+export default async function ComponentAPIPage({
   params,
 }: {
   params: Promise<{ slug: string }>;
@@ -146,12 +143,12 @@ export default async function ComponentPage({
 
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8 md:px-6 md:py-12">
-      <div className="mb-6 flex items-center justify-end">
+      <div className="mb-6 flex items-center justify-between">
         <Link
-          href={`/docs/components/${slug}/api`}
+          href={`/docs/components/${slug}`}
           className="text-sm text-muted-foreground hover:text-primary transition-colors"
         >
-          View API Reference →
+          ← Back to Component
         </Link>
       </div>
       <article className="max-w-none">
@@ -168,3 +165,4 @@ export default async function ComponentPage({
     </div>
   );
 }
+

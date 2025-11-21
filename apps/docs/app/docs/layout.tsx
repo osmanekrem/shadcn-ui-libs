@@ -7,10 +7,12 @@ export default function DocsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex w-full h-full relative">
+    <div className="flex w-full h-full relative ">
       <SidebarProvider className="h-full w-full relative">
         <Sidebar />
-        <main className="flex-1 min-w-0 flex flex-col">{children}</main>
+        <main className="flex-1 min-w-0 flex flex-col overflow-y-auto">
+          <div className="container mx-auto">{children}</div>
+        </main>
       </SidebarProvider>
     </div>
   );
