@@ -6,6 +6,26 @@
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "style": "dist/styles.css",
+  "exports": {
+    ".": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "style": "./dist/styles.css"
+    },
+    "./table-elements": {
+      "import": "./dist/table-elements.esm.js",
+      "require": "./dist/table-elements.js",
+      "types": "./dist/table-elements.d.ts"
+    },
+    "./table": {
+      "import": "./dist/index.esm.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts",
+      "style": "./dist/styles.css"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
   "files": [
     "dist"
   ],
