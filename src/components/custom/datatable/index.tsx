@@ -250,11 +250,26 @@ export function DataTable<TData>({
     if (value === null) return true;
 
     if (Array.isArray(filterValue)) {
-      const [min, max] = filterValue;
-      const numValue = Number(value);
-      if (min !== null && min !== "" && numValue < min) return false;
-      if (max !== null && max !== "" && numValue > max) return false;
-      return true;
+      // Check if it's a range filter (array of two numbers)
+      if (
+        filterValue.length === 2 &&
+        (typeof filterValue[0] === "number" ||
+          filterValue[0] === null ||
+          filterValue[0] === "") &&
+        (typeof filterValue[1] === "number" ||
+          filterValue[1] === null ||
+          filterValue[1] === "")
+      ) {
+        const [min, max] = filterValue;
+        const numValue = Number(value);
+        if (min !== null && min !== "" && numValue < min) return false;
+        if (max !== null && max !== "" && numValue > max) return false;
+        return true;
+      }
+      // Otherwise, treat as multi-select filter (array of strings)
+      if (filterValue.length === 0) return true;
+      const stringValue = String(value);
+      return filterValue.includes(stringValue);
     }
 
     if (typeof filterValue === "string") {
