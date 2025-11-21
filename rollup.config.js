@@ -42,7 +42,8 @@ export default {
     }),
     postcss({
       config: {
-        path: "./postcss.config.js",
+        // Use the .mjs config that exists in the repo
+        path: "./postcss.config.mjs",
       },
       extensions: [".css"],
       minimize: true,

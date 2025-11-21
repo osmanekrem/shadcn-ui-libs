@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Ensure Tailwind scans library source files when building CSS
+   so utilities used in TS/TSX (e.g., h-9) are included in the output. */
+@source "../**/*.{ts,tsx}";
+
 @theme {
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));

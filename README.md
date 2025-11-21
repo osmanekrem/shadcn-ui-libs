@@ -27,6 +27,16 @@ A powerful, feature-rich React table component built on top of TanStack Table v8
 npm install tanstack-shadcn-table
 ```
 
+### 📎 Styles
+
+This library ships its own compiled CSS so Tailwind utilities used internally (e.g., `h-9`) always work, even if your app doesn't use Tailwind or purges different class sets.
+
+Import the CSS once in your app entry:
+
+```ts
+import 'tanstack-shadcn-table/dist/styles.css';
+```
+
 ### 📊 Bundle Size
 
 - **Library Size**: ~96KB (gzipped)

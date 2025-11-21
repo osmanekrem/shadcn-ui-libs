@@ -1,23 +1,26 @@
 {
   "name": "tanstack-shadcn-table",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "A powerful, feature-rich React table component built on top of TanStack Table v8 with shadcn/ui styling. Optimized bundle size with 55% reduction through peer dependencies.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
+  "style": "dist/styles.css",
   "files": [
     "dist"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "dist/styles.css"
+  ],
   "scripts": {
     "build:css": "tailwindcss -i ./src/styles/globals.css -o ./dist/styles.css --minify",
-    "build": "npm run build:css && rollup -c",
+    "build": "NODE_ENV=production npm run build:css && rollup -c",
     "build:analyze": "npm run build:css && rollup -c --config-option visualizer.open=false",
     "build:prod": "NODE_ENV=production npm run build:css && rollup -c",
     "dev": "rollup -c -w",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "prepare": "npm run build"
+    "prepare": "npm run build:prod"
   },
   "keywords": [
     "react",

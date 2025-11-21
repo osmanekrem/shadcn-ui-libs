@@ -1,6 +1,3 @@
-// Styles
-import "./styles/globals.css";
-
 // Main Components - Core functionality
 export {
   DataTable,

@@ -18,7 +18,6 @@ import { Column, ColumnDef, TableOptions } from "../../../types/types";
 import { cn, getValue } from "../../../lib/utils";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import DebouncedInput from "../debounced-input";
-import "../../../styles/globals.css";
 import {
   Table as DefaultTable,
   TableBody,
@@ -53,7 +52,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 import { DraggableHeader, DraggableTableCell } from "../draggable-header";
 import { Checkbox } from "../../ui/checkbox";
-import React, { CSSProperties } from "react";
+import React from "react";
 import {
   sanitizeSearchInput,
   validatePaginationParams,
@@ -67,6 +66,14 @@ import {
 } from "../../../lib/i18n";
 import { Button } from "../../ui/button";
 
+type DraggableFilterCellProps<TData> = {
+  readonly header: Header<TData, unknown>;
+  readonly colClassName?: string;
+  readonly TableHeadComponent: React.ElementType;
+  readonly translations?: TableTranslations;
+  readonly isTableDragging?: boolean;
+};
+
 // DraggableFilterCell component for filter row
 function DraggableFilterCell<TData>({
   header,
@@ -74,13 +81,7 @@ function DraggableFilterCell<TData>({
   TableHeadComponent,
   translations,
   isTableDragging = false,
-}: {
-  header: Header<TData, unknown>;
-  colClassName?: string;
-  TableHeadComponent: React.ElementType;
-  translations?: TableTranslations;
-  isTableDragging?: boolean;
-}) {
+}: DraggableFilterCellProps<TData>) {
   const { isDragging, setNodeRef, transform } = useSortable({
     id: header.column.id,
   });
@@ -111,7 +112,7 @@ function DraggableFilterCell<TData>({
     >
       <div className="w-full">
         {flexRender(
-          header.isPlaceholder ? null : header.column.getCanFilter() ? (
+          !header.isPlaceholder && header.column.getCanFilter() ? (
             <FilterInput
               column={header.column as Column<TData>}
               translations={translations}
@@ -139,16 +140,16 @@ declare module "@tanstack/react-table" {
 }
 
 export type DataTableProps<TData> = {
-  tableOptions: TableOptions<TData>;
-  className?: string;
+  readonly tableOptions: TableOptions<TData>;
+  readonly className?: string;
 
-  TableComponent?: React.ElementType;
-  TableHeaderComponent?: React.ElementType;
-  TableRowComponent?: React.ElementType;
-  TableCellComponent?: React.ElementType;
-  TableHeadComponent?: React.ElementType;
-  TableBodyComponent?: React.ElementType;
-  TableFooterComponent?: React.ElementType;
+  readonly TableComponent?: React.ElementType;
+  readonly TableHeaderComponent?: React.ElementType;
+  readonly TableRowComponent?: React.ElementType;
+  readonly TableCellComponent?: React.ElementType;
+  readonly TableHeadComponent?: React.ElementType;
+  readonly TableBodyComponent?: React.ElementType;
+  readonly TableFooterComponent?: React.ElementType;
 };
 
 export function DataTable<TData>({
@@ -561,7 +562,7 @@ export function DataTable<TData>({
             items={sortableItems}
             strategy={horizontalListSortingStrategy}
           >
-            <TableComponent style={{ tableLayout: "fixed", width: "100%" }}>
+            <TableComponent>
               <TableHeaderComponent>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <>
