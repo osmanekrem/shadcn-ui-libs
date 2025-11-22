@@ -1,9 +1,28 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { FacetedFilter } from "../../src/table-elements/faceted-filter";
-import { useReactTable, getCoreRowModel, getFilteredRowModel, getFacetedRowModel, getFacetedUniqueValues } from "@tanstack/react-table";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues,
+} from "@tanstack/react-table";
 import { DataTable } from "../../src/components/custom/datatable";
 import { ColumnDef } from "../../src/types/types";
-import React from "react";
+import React, { useMemo } from "react";
+import {
+  availableLanguages,
+  SupportedLanguage,
+  turkishTranslations,
+  spanishTranslations,
+  frenchTranslations,
+  germanTranslations,
+} from "../../src/lib/i18n";
+import { CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
+import {
+  fuzzyFilter,
+  fuzzySort,
+} from "../../src/components/custom/datatable/actions";
 
 type Product = {
   id: number;
@@ -81,6 +100,57 @@ const sampleData: Product[] = [
   },
 ];
 
+const statusOptions = [
+  {
+    label: "Active",
+    value: "active",
+    icon: CheckCircle2,
+  },
+  {
+    label: "Inactive",
+    value: "inactive",
+    icon: XCircle,
+  },
+  {
+    label: "Pending",
+    value: "pending",
+    icon: Clock,
+  },
+];
+
+const categoryOptions = [
+  {
+    label: "Electronics",
+    value: "Electronics",
+  },
+  {
+    label: "Clothing",
+    value: "Clothing",
+  },
+  {
+    label: "Food",
+    value: "Food",
+  },
+];
+
+const priorityOptions = [
+  {
+    label: "Low",
+    value: "low",
+    icon: AlertCircle,
+  },
+  {
+    label: "Medium",
+    value: "medium",
+    icon: AlertCircle,
+  },
+  {
+    label: "High",
+    value: "high",
+    icon: AlertCircle,
+  },
+];
+
 const meta = {
   title: "Table Elements/FacetedFilter",
   component: FacetedFilter,
@@ -89,28 +159,9 @@ const meta = {
   },
   tags: ["autodocs"],
   argTypes: {
-    align: {
-      control: "select",
-      options: ["start", "center", "end"],
-      description: "Alignment of the dropdown menu",
-    },
-    side: {
-      control: "select",
-      options: ["top", "right", "bottom", "left"],
-      description: "Side of the trigger to show the dropdown",
-    },
-    size: {
-      control: "select",
-      options: ["default", "sm", "lg", "icon"],
-      description: "Size of the trigger button",
-    },
-    showCount: {
-      control: "boolean",
-      description: "Whether to show the count badge on the trigger",
-    },
-    maxOptions: {
-      control: "number",
-      description: "Maximum number of options to display",
+    title: {
+      control: "text",
+      description: "Title of the filter",
     },
   },
 } satisfies Meta<typeof FacetedFilter>;
@@ -120,7 +171,7 @@ type Story = StoryObj<typeof meta>;
 
 // Helper to create a column for stories
 const createMockColumn = (accessorKey: keyof Product) => {
-  const table = useReactTable({
+  const table = useReactTable<Product>({
     data: sampleData,
     columns: [
       {
@@ -131,23 +182,27 @@ const createMockColumn = (accessorKey: keyof Product) => {
     getFilteredRowModel: getFilteredRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
+    filterFns: {
+      fuzzy: fuzzyFilter,
+    },
+    sortingFns: {
+      fuzzy: fuzzySort,
+    },
   });
   return table.getColumn(accessorKey as string)!;
 };
 
+// @ts-expect-error - Storybook type issue with render functions
 export const Default: Story = {
   render: () => {
     const column = createMockColumn("status");
     return (
-      <FacetedFilter
-        column={column}
-        title="Status"
-        showCount
-      />
+      <FacetedFilter column={column} title="Status" options={statusOptions} />
     );
   },
 };
 
+// @ts-expect-error - Storybook type issue with render functions
 export const CategoryFilter: Story = {
   render: () => {
     const column = createMockColumn("category");
@@ -155,12 +210,13 @@ export const CategoryFilter: Story = {
       <FacetedFilter
         column={column}
         title="Category"
-        showCount
+        options={categoryOptions}
       />
     );
   },
 };
 
+// @ts-expect-error - Storybook type issue with render functions
 export const PriorityFilter: Story = {
   render: () => {
     const column = createMockColumn("priority");
@@ -168,50 +224,122 @@ export const PriorityFilter: Story = {
       <FacetedFilter
         column={column}
         title="Priority"
-        showCount
+        options={priorityOptions}
       />
     );
   },
 };
 
-export const WithoutCount: Story = {
+// @ts-expect-error - Storybook type issue with render functions
+export const WithIcons: Story = {
+  render: () => {
+    const column = createMockColumn("status");
+    return (
+      <FacetedFilter column={column} title="Status" options={statusOptions} />
+    );
+  },
+};
+
+// @ts-expect-error - Storybook type issue with render functions
+export const Turkish: Story = {
+  render: () => {
+    const column = createMockColumn("status");
+    return (
+      <FacetedFilter
+        column={column}
+        title="Durum"
+        options={statusOptions}
+        translations={turkishTranslations}
+      />
+    );
+  },
+};
+
+// @ts-expect-error - Storybook type issue with render functions
+export const Spanish: Story = {
+  render: () => {
+    const column = createMockColumn("status");
+    return (
+      <FacetedFilter
+        column={column}
+        title="Estado"
+        options={statusOptions}
+        translations={spanishTranslations}
+      />
+    );
+  },
+};
+
+// @ts-expect-error - Storybook type issue with render functions
+export const French: Story = {
+  render: () => {
+    const column = createMockColumn("status");
+    return (
+      <FacetedFilter
+        column={column}
+        title="Statut"
+        options={statusOptions}
+        translations={frenchTranslations}
+      />
+    );
+  },
+};
+
+// @ts-expect-error - Storybook type issue with render functions
+export const German: Story = {
   render: () => {
     const column = createMockColumn("status");
     return (
       <FacetedFilter
         column={column}
         title="Status"
-        showCount={false}
+        options={statusOptions}
+        translations={germanTranslations}
       />
     );
   },
 };
 
-export const CustomTrigger: Story = {
+// @ts-expect-error - Storybook type issue with render functions
+export const LanguageSwitcher: Story = {
   render: () => {
+    const [language, setLanguage] = React.useState<SupportedLanguage>("en");
     const column = createMockColumn("status");
-    const filterValue = column.getFilterValue() as string[] | undefined;
-    const selectedCount = filterValue?.length || 0;
-    
+
+    const translations = useMemo(
+      () => availableLanguages[language].translations,
+      [language]
+    );
+
     return (
-      <FacetedFilter
-        column={column}
-        title="Status"
-        trigger={
-          <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex items-center gap-2">
-            Filter Status
-            {selectedCount > 0 && (
-              <span className="bg-white text-blue-500 rounded-full px-2 py-0.5 text-xs">
-                {selectedCount}
-              </span>
-            )}
-          </button>
-        }
-      />
+      <div className="space-y-4">
+        <div className="flex gap-2">
+          {Object.entries(availableLanguages).map(([code, { name }]) => (
+            <button
+              key={code}
+              onClick={() => setLanguage(code as SupportedLanguage)}
+              className={`px-3 py-1 rounded text-sm ${
+                language === code
+                  ? "bg-blue-500 text-white"
+                  : "bg-gray-200 text-gray-700"
+              }`}
+            >
+              {name}
+            </button>
+          ))}
+        </div>
+        <FacetedFilter
+          column={column}
+          title="Status"
+          options={statusOptions}
+          translations={translations}
+        />
+      </div>
     );
   },
 };
 
+// @ts-expect-error - Storybook type issue with render functions
 export const InTable: Story = {
   render: () => {
     const columns: ColumnDef<Product>[] = [
@@ -222,35 +350,14 @@ export const InTable: Story = {
       {
         accessorKey: "category",
         header: "Category",
-        filter: {
-          type: "multi-select",
-          field: "category",
-          options: [],
-          optionLabel: "label",
-          optionValue: "value",
-        },
       },
       {
         accessorKey: "status",
         header: "Status",
-        filter: {
-          type: "multi-select",
-          field: "status",
-          options: [],
-          optionLabel: "label",
-          optionValue: "value",
-        },
       },
       {
         accessorKey: "priority",
         header: "Priority",
-        filter: {
-          type: "multi-select",
-          field: "priority",
-          options: [],
-          optionLabel: "label",
-          optionValue: "value",
-        },
       },
     ];
 
@@ -268,71 +375,31 @@ export const InTable: Story = {
   },
 };
 
-export const WithCustomFormatting: Story = {
+// @ts-expect-error - Storybook type issue with render functions
+export const MultipleFilters: Story = {
   render: () => {
-    const column = createMockColumn("status");
-    return (
-      <FacetedFilter
-        column={column}
-        title="Status"
-        showCount
-        formatOptionLabel={(value) => {
-          const status = String(value);
-          return status.charAt(0).toUpperCase() + status.slice(1);
-        }}
-      />
-    );
-  },
-};
+    const statusColumn = createMockColumn("status");
+    const categoryColumn = createMockColumn("category");
+    const priorityColumn = createMockColumn("priority");
 
-export const LimitedOptions: Story = {
-  render: () => {
-    const column = createMockColumn("category");
     return (
-      <FacetedFilter
-        column={column}
-        title="Category"
-        showCount
-        maxOptions={2}
-      />
-    );
-  },
-};
-
-export const DifferentAlignments: Story = {
-  render: () => {
-    const column = createMockColumn("status");
-    return (
-      <div className="space-y-8 p-8">
-        <div>
-          <p className="mb-2 text-sm font-medium">Align: start</p>
-          <FacetedFilter
-            column={column}
-            title="Status"
-            align="start"
-            showCount
-          />
-        </div>
-        <div>
-          <p className="mb-2 text-sm font-medium">Align: center</p>
-          <FacetedFilter
-            column={column}
-            title="Status"
-            align="center"
-            showCount
-          />
-        </div>
-        <div>
-          <p className="mb-2 text-sm font-medium">Align: end</p>
-          <FacetedFilter
-            column={column}
-            title="Status"
-            align="end"
-            showCount
-          />
-        </div>
+      <div className="flex gap-2 flex-wrap">
+        <FacetedFilter
+          column={statusColumn}
+          title="Status"
+          options={statusOptions}
+        />
+        <FacetedFilter
+          column={categoryColumn}
+          title="Category"
+          options={categoryOptions}
+        />
+        <FacetedFilter
+          column={priorityColumn}
+          title="Priority"
+          options={priorityOptions}
+        />
       </div>
     );
   },
 };
-

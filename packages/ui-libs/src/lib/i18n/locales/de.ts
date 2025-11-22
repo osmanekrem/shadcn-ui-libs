@@ -36,6 +36,9 @@ export const germanTranslations: TableTranslations = {
     to: "Bis",
     selectOption: "Option auswählen",
     noOptionsFound: "Keine Optionen gefunden",
+    selectedCount: "{count} ausgewählt",
+    clearFilters: "Filter löschen",
+    noResultsFound: "Keine Ergebnisse gefunden.",
   },
 
   sorting: {

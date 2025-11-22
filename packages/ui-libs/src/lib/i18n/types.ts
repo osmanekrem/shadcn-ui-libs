@@ -36,6 +36,10 @@ export interface TableTranslations {
     to: string;
     selectOption: string;
     noOptionsFound: string;
+    // Faceted filter
+    selectedCount: string; // "{count} selected"
+    clearFilters: string;
+    noResultsFound: string;
   };
 
   // Sorting

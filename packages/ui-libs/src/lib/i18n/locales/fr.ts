@@ -36,6 +36,9 @@ export const frenchTranslations: TableTranslations = {
     to: "À",
     selectOption: "Sélectionner une option",
     noOptionsFound: "Aucune option trouvée",
+    selectedCount: "{count} sélectionnés",
+    clearFilters: "Effacer les filtres",
+    noResultsFound: "Aucun résultat trouvé.",
   },
 
   sorting: {

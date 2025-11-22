@@ -36,6 +36,9 @@ export const spanishTranslations: TableTranslations = {
     to: "Hasta",
     selectOption: "Seleccionar opción",
     noOptionsFound: "No se encontraron opciones",
+    selectedCount: "{count} seleccionados",
+    clearFilters: "Limpiar filtros",
+    noResultsFound: "No se encontraron resultados.",
   },
 
   sorting: {

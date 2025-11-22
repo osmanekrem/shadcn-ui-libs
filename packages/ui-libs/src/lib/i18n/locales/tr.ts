@@ -36,6 +36,9 @@ export const turkishTranslations: TableTranslations = {
     to: "Bitiş",
     selectOption: "Seçenek seçin",
     noOptionsFound: "Seçenek bulunamadı",
+    selectedCount: "{count} Seçildi",
+    clearFilters: "Filtreleri Temizle",
+    noResultsFound: "Sonuç bulunamadı.",
   },
 
   sorting: {
