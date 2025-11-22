@@ -61,5 +61,5 @@ export { getValue } from "./lib/utils";
 
 // Hooks - Tree-shakeable
 // For tree-shaking, import directly from sub-modules:
-// import { useDebounce } from "tanstack-shadcn-table/lib/hooks/use-debounce";
+// import { useDebounce } from "tanstack-shadcn-table/hooks/use-debounce";
 export { useDebounce, useRateLimit } from "./lib/hooks";

@@ -3,7 +3,24 @@
  * Tree-shakeable - import only what you need
  */
 
-import { sanitizeSearchInput } from './sanitize';
+/**
+ * Sanitizes search input to prevent injection attacks (SQL injection, XSS, etc.).
+ * Removes dangerous characters and limits length to prevent DoS attacks.
+ */
+function sanitizeSearchInput(input: string): string {
+  if (typeof input !== "string") return "";
+
+  return (
+    input
+      // Remove SQL injection patterns
+      .replace(/['";\\]/g, "")
+      // Remove potential script injections
+      .replace(/<[^>]*>/g, "")
+      // Limit length to prevent DoS
+      .slice(0, 1000)
+      .trim()
+  );
+}
 
 /**
  * Validates and sanitizes pagination parameters to prevent abuse and DoS attacks.

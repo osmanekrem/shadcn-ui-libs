@@ -16,15 +16,17 @@ const sharedPlugins = [
     include: /node_modules/,
     transformMixedEsModules: true,
   }),
-    typescript({
-      tsconfig: "./tsconfig.json",
-      exclude: ["**/*.stories.*", "**/*.test.*"],
-      compilerOptions: {
-        declaration: true,
-        declarationMap: false, // Source maps kaldırıldı - paket boyutu optimizasyonu
-        declarationDir: "./dist",
-      },
-    }),
+  typescript({
+    tsconfig: "./tsconfig.json",
+    exclude: ["**/*.stories.*", "**/*.test.*"],
+    compilerOptions: {
+      declaration: true,
+      declarationMap: false, // Source maps kaldırıldı - paket boyutu optimizasyonu
+      declarationDir: "./dist",
+      module: "ESNext",
+      moduleResolution: "node",
+    },
+  }),
   terser({
     compress: {
       drop_console: true,
@@ -98,45 +100,58 @@ const sharedTreeshake = {
 // Feature-based code splitting function for ESM
 function createManualChunks(id) {
   // Filtering features
-  if (id.includes("filter-input") || id.includes("fuzzyFilter") || id.includes("fuzzy-filter")) {
+  if (
+    id.includes("filter-input") ||
+    id.includes("fuzzyFilter") ||
+    id.includes("fuzzy-filter")
+  ) {
     return "filtering";
   }
-  
+
   // Sorting features
-  if (id.includes("fuzzySort") || id.includes("fuzzy-sort") || id.includes("sorting")) {
+  if (
+    id.includes("fuzzySort") ||
+    id.includes("fuzzy-sort") ||
+    id.includes("sorting")
+  ) {
     return "sorting";
   }
-  
+
   // Pagination features
   if (id.includes("pagination")) {
     return "pagination";
   }
-  
+
   // Column resizing features
   if (id.includes("column-resize") || id.includes("columnResize")) {
     return "column-resizing";
   }
-  
+
   // Row selection features
   if (id.includes("checkbox") && id.includes("components")) {
     return "row-selection";
   }
-  
+
   // Drag and drop features
-  if (id.includes("dnd") || id.includes("draggable") || id.includes("sortable") || id.includes("@dnd-kit")) {
+  if (
+    id.includes("dnd") ||
+    id.includes("draggable") ||
+    id.includes("sortable") ||
+    id.includes("@dnd-kit")
+  ) {
     return "drag-drop";
   }
-  
+
   // UI components (shared)
   if (id.includes("components/ui/")) {
     return "ui-components";
   }
-  
+
   // Utilities
   if (id.includes("lib/utils") || id.includes("lib/i18n")) {
     return "utils";
   }
-  
+
   // Security utilities
   if (id.includes("lib/security")) {
     return "security";
@@ -199,6 +214,8 @@ const localeBuilds = localeConfigs.map(({ lang }) => ({
         declaration: false,
         declarationMap: false,
         composite: false,
+        module: "ESNext",
+        moduleResolution: "node",
       },
     }),
     terser({
@@ -259,11 +276,30 @@ const securityBuilds = securityModules.map(({ module, path }) => ({
     }),
     typescript({
       tsconfig: "./tsconfig.json",
-      exclude: ["**/*.stories.*", "**/*.test.*"],
+      // Sadece ilgili dosyayı işle - tüm projeyi değil
+      include: [`src/${path}.ts`],
+      exclude: [
+        "**/*.stories.*",
+        "**/*.test.*",
+        "**/components/**",
+        "**/datatable/**",
+        "**/ui-elements/**",
+        "**/table-elements/**",
+        "**/hooks/**",
+        // Diğer security modüllerini de exclude et - sadece mevcut modülü işle
+        ...securityModules
+          .filter((m) => m.module !== module)
+          .map((m) => `src/${m.path}.ts`),
+      ],
       compilerOptions: {
         declaration: true,
-        declarationMap: false, // Source maps kaldırıldı - paket boyutu optimizasyonu
+        declarationMap: false,
         declarationDir: "./dist/security",
+        emitDeclarationOnly: false,
+        composite: false,
+        skipLibCheck: true,
+        module: "ESNext",
+        moduleResolution: "node",
       },
     }),
     terser({
@@ -300,13 +336,13 @@ const hooksBuilds = hooksModules.map(({ module, path }) => ({
   input: `src/${path}.ts`,
   output: [
     {
-      file: `dist/lib/hooks/${module}.js`,
+      file: `dist/hooks/${module}.js`,
       format: "cjs",
       exports: "named",
       sourcemap: false,
     },
     {
-      file: `dist/lib/hooks/${module}.esm.js`,
+      file: `dist/hooks/${module}.esm.js`,
       format: "esm",
       exports: "named",
       sourcemap: false,
@@ -324,11 +360,30 @@ const hooksBuilds = hooksModules.map(({ module, path }) => ({
     }),
     typescript({
       tsconfig: "./tsconfig.json",
-      exclude: ["**/*.stories.*", "**/*.test.*"],
+      // Sadece ilgili dosyayı işle - tüm projeyi değil
+      include: [`src/${path}.ts`],
+      exclude: [
+        "**/*.stories.*",
+        "**/*.test.*",
+        "**/components/**",
+        "**/datatable/**",
+        "**/ui-elements/**",
+        "**/table-elements/**",
+        "**/security/**",
+        // Diğer hooks modüllerini de exclude et - sadece mevcut modülü işle
+        ...hooksModules
+          .filter((m) => m.module !== module)
+          .map((m) => `src/${m.path}.ts`),
+      ],
       compilerOptions: {
         declaration: true,
         declarationMap: false,
-        declarationDir: "./dist/lib/hooks",
+        declarationDir: "./dist/hooks",
+        emitDeclarationOnly: false,
+        composite: false,
+        skipLibCheck: true,
+        module: "ESNext",
+        moduleResolution: "node",
       },
     }),
     terser({
@@ -361,7 +416,7 @@ const hooksBuilds = hooksModules.map(({ module, path }) => ({
   treeshake: sharedTreeshake,
 }));
 
-export default [
+const buildConfigs = [
   // Main entry point (table) - CJS format (no code splitting, but optimized)
   {
     input: "src/index.ts",
@@ -390,7 +445,7 @@ export default [
       }),
       visualizer({
         filename: "bundle-analysis-table.html",
-        open: process.env.NODE_ENV !== "production",
+        open: process.env.ANALYZE === "true",
         gzipSize: true,
         brotliSize: true,
       }),
@@ -425,7 +480,7 @@ export default [
       }),
       visualizer({
         filename: "bundle-analysis-table-esm.html",
-        open: process.env.NODE_ENV !== "production",
+        open: process.env.ANALYZE === "true",
         gzipSize: true,
         brotliSize: true,
       }),
@@ -451,7 +506,7 @@ export default [
       ...sharedPlugins,
       visualizer({
         filename: "bundle-analysis-table-elements.html",
-        open: process.env.NODE_ENV !== "production",
+        open: process.env.ANALYZE === "true",
         gzipSize: true,
         brotliSize: true,
       }),
@@ -476,7 +531,7 @@ export default [
       ...sharedPlugins,
       visualizer({
         filename: "bundle-analysis-table-elements-esm.html",
-        open: process.env.NODE_ENV !== "production",
+        open: process.env.ANALYZE === "true",
         gzipSize: true,
         brotliSize: true,
       }),
@@ -502,7 +557,7 @@ export default [
       ...sharedPlugins,
       visualizer({
         filename: "bundle-analysis-ui-elements.html",
-        open: process.env.NODE_ENV !== "production",
+        open: process.env.ANALYZE === "true",
         gzipSize: true,
         brotliSize: true,
       }),
@@ -527,7 +582,7 @@ export default [
       ...sharedPlugins,
       visualizer({
         filename: "bundle-analysis-ui-elements-esm.html",
-        open: process.env.NODE_ENV !== "production",
+        open: process.env.ANALYZE === "true",
         gzipSize: true,
         brotliSize: true,
       }),
@@ -542,3 +597,86 @@ export default [
   // Hooks module entry points (tree-shakeable)
   ...hooksBuilds,
 ];
+
+// Final cleanup - son build'e cleanup plugin'i ekle
+const configsWithCleanup = buildConfigs.map((config, index, array) => {
+  // Son build'e cleanup plugin'i ekle
+  if (index === array.length - 1 && config.plugins) {
+    config.plugins.push({
+      name: "final-cleanup",
+      buildEnd() {
+        const fs = require("fs");
+        const path = require("path");
+
+        // Security klasöründeki gereksiz dosyaları temizle
+        const securityDir = path.join(process.cwd(), "dist/security");
+        if (fs.existsSync(securityDir)) {
+          const allowedFiles = securityModules.map((m) => m.module);
+          try {
+            const files = fs.readdirSync(securityDir, { recursive: true });
+            files.forEach((file) => {
+              const filePath = path.join(securityDir, file);
+              try {
+                const stat = fs.statSync(filePath);
+
+                if (stat.isDirectory()) {
+                  // Alt klasörleri sil
+                  fs.rmSync(filePath, { recursive: true, force: true });
+                } else if (file.endsWith(".d.ts")) {
+                  // Sadece izin verilen modüllerin declaration dosyalarını tut
+                  const fileName = path.basename(file, ".d.ts");
+                  if (
+                    !allowedFiles.includes(fileName) &&
+                    fileName !== "index"
+                  ) {
+                    fs.unlinkSync(filePath);
+                  }
+                }
+              } catch (e) {
+                // Ignore errors
+              }
+            });
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+
+        // Hooks klasöründeki gereksiz dosyaları temizle
+        const hooksDir = path.join(process.cwd(), "dist/hooks");
+        if (fs.existsSync(hooksDir)) {
+          const allowedFiles = hooksModules.map((m) => m.module);
+          try {
+            const files = fs.readdirSync(hooksDir, { recursive: true });
+            files.forEach((file) => {
+              const filePath = path.join(hooksDir, file);
+              try {
+                const stat = fs.statSync(filePath);
+
+                if (stat.isDirectory()) {
+                  // Alt klasörleri sil
+                  fs.rmSync(filePath, { recursive: true, force: true });
+                } else if (file.endsWith(".d.ts")) {
+                  // Sadece izin verilen modüllerin declaration dosyalarını tut
+                  const fileName = path.basename(file, ".d.ts");
+                  if (
+                    !allowedFiles.includes(fileName) &&
+                    fileName !== "index"
+                  ) {
+                    fs.unlinkSync(filePath);
+                  }
+                }
+              } catch (e) {
+                // Ignore errors
+              }
+            });
+          } catch (e) {
+            // Ignore errors
+          }
+        }
+      },
+    });
+  }
+  return config;
+});
+
+export default configsWithCleanup;

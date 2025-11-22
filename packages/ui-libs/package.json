@@ -75,15 +75,15 @@
       "require": "./dist/security/csp.js",
       "types": "./dist/security/csp.d.ts"
     },
-    "./lib/hooks/use-debounce": {
-      "import": "./dist/lib/hooks/use-debounce.esm.js",
-      "require": "./dist/lib/hooks/use-debounce.js",
-      "types": "./dist/lib/hooks/use-debounce.d.ts"
+    "./hooks/use-debounce": {
+      "import": "./dist/hooks/use-debounce.esm.js",
+      "require": "./dist/hooks/use-debounce.js",
+      "types": "./dist/hooks/use-debounce.d.ts"
     },
-    "./lib/hooks/use-rate-limit": {
-      "import": "./dist/lib/hooks/use-rate-limit.esm.js",
-      "require": "./dist/lib/hooks/use-rate-limit.js",
-      "types": "./dist/lib/hooks/use-rate-limit.d.ts"
+    "./hooks/use-rate-limit": {
+      "import": "./dist/hooks/use-rate-limit.esm.js",
+      "require": "./dist/hooks/use-rate-limit.js",
+      "types": "./dist/hooks/use-rate-limit.d.ts"
     }
   },
   "files": [
@@ -97,7 +97,7 @@
     "build:registry": "node scripts/build-registry.js",
     "build:i18n-types": "node scripts/generate-i18n-types.js",
     "build": "NODE_ENV=production npm run build:css && npm run build:registry && rollup -c && npm run build:i18n-types",
-    "build:analyze": "npm run build:css && rollup -c --config-option visualizer.open=false",
+    "build:analyze": "ANALYZE=true npm run build:css && ANALYZE=true rollup -c",
     "build:prod": "NODE_ENV=production npm run build:css && npm run build:registry && rollup -c",
     "dev": "rollup -c -w",
     "storybook": "storybook dev -p 6006",
