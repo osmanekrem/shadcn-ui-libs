@@ -176,33 +176,62 @@ const columns: ColumnDef<Person>[] = [
   },
 ];
 
-export const Default: Story = {
+/**
+ * **Default DataTable**
+ *
+ * Temel kullanım örneği. Filtreleme özelliği aktif ve filtre butonu gösteriliyor.
+ * Bu story, DataTable'ın en basit kullanımını gösterir.
+ *
+ * **Özellikler:**
+ * - Temel tablo görünümü
+ * - Kolon filtreleme aktif
+ * - Filtre göster/gizle butonu
+ * - Responsive tasarım
+ */
+export const Default = {
   args: {
     tableOptions: {
       data: defaultData,
-      columns: columns,
+      columns: columns as ColumnDef<Person>[],
       filter: true,
       showFilterButton: true,
-    } as TableOptions<Person>,
+    } as any,
 
     className: "w-full flex flex-col min-w-screen",
-  },
-};
+  } as any,
+} satisfies Story;
 
+/**
+ * **Pagination ile DataTable**
+ *
+ * Sayfalama özelliği aktif olan tablo. Büyük veri setlerinde sayfa sayfa gösterim yapar.
+ *
+ * **Özellikler:**
+ * - Sayfa başına 20 kayıt gösterimi
+ * - Toplam 500 kayıt
+ * - Sayfa boyutu seçimi
+ * - Sayfa navigasyon butonları
+ * - "Go to page" özelliği
+ *
+ * **Kullanım Senaryoları:**
+ * - Büyük veri setleri
+ * - Server-side pagination
+ * - Performans optimizasyonu
+ */
 export const WithPagination: Story = {
   args: {
     tableOptions: {
       data: defaultData,
-      columns: columns,
+      columns: columns as ColumnDef<Person>[],
 
       pagination: {
         pageSize: 20,
         totalRecords: 500,
         pageSizeLabel: "Rows per page",
         goToPageLabel: "Go to page",
-        mode: "default",
+        mode: "default" as const,
       },
-    },
+    } as TableOptions<Person>,
   },
 };
 
@@ -304,7 +333,24 @@ function onLazyLoad(event: LazyLoadEvent) {
   }
 }
 
+/**
+ * **Kontrollü Pagination**
+ *
+ * Pagination state'inin dışarıdan kontrol edildiği örnek.
+ * State yönetimi için React state hook'ları kullanılıyor.
+ *
+ * **Özellikler:**
+ * - Controlled pagination state
+ * - Programatik sayfa kontrolü
+ * - State senkronizasyonu
+ *
+ * **Kullanım Senaryoları:**
+ * - URL parametreleri ile sayfa yönetimi
+ * - Dış state yönetimi (Redux, Zustand, vb.)
+ * - Programatik navigasyon
+ */
 export const ControlledPagination: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
     const [page, setPage] = useState(0);
@@ -320,7 +366,7 @@ export const ControlledPagination: Story = {
             totalRecords: 500,
             pageSizeLabel: "Rows per page",
             goToPageLabel: "Go to page",
-            mode: "default",
+            mode: "default" as const,
           },
         }}
       />
@@ -328,7 +374,30 @@ export const ControlledPagination: Story = {
   },
 };
 
+/**
+ * **Lazy Loading (Server-Side)**
+ *
+ * Server-side veri yükleme örneği. Veriler sayfa değiştiğinde, filtreleme veya sıralama yapıldığında
+ * server'dan yüklenir. Bu özellik büyük veri setleri için performans optimizasyonu sağlar.
+ *
+ * **Özellikler:**
+ * - Server-side pagination
+ * - Server-side filtering
+ * - Server-side sorting
+ * - Lazy data loading
+ * - Rate limiting koruması
+ *
+ * **Kullanım Senaryoları:**
+ * - Büyük veri setleri (10,000+ kayıt)
+ * - API entegrasyonu
+ * - Database sorguları
+ * - Performans optimizasyonu
+ *
+ * **Not:** `lazy: true` ayarlandığında, tüm filtreleme ve sıralama işlemleri
+ * `onLazyLoad` callback'i üzerinden yönetilir.
+ */
 export const Lazy: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>([]);
     return (
@@ -347,7 +416,7 @@ export const Lazy: Story = {
             totalRecords: 500,
             pageSizeLabel: "Rows per page",
             goToPageLabel: "Go to page",
-            mode: "default",
+            mode: "default" as const,
           },
 
           lazy: true,
@@ -357,7 +426,24 @@ export const Lazy: Story = {
   },
 };
 
+/**
+ * **Kolon Sıralaması (Column Ordering)**
+ *
+ * Kolonların sırasının programatik olarak kontrol edildiği örnek.
+ * Kolon sırası state ile yönetilir ve değişiklikler `onColumnOrderChange` callback'i ile yakalanır.
+ *
+ * **Özellikler:**
+ * - Programatik kolon sıralaması
+ * - State yönetimi
+ * - Kolon sırası değişiklik takibi
+ *
+ * **Kullanım Senaryoları:**
+ * - Kullanıcı tercihlerini kaydetme
+ * - Varsayılan kolon sırası belirleme
+ * - Dinamik kolon yönetimi
+ */
 export const ColumnsOrder: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
     const [columnsOrder, setColumnsOrder] = useState<string[]>([
@@ -421,7 +507,26 @@ export const ColumnsOrder: Story = {
   },
 };
 
+/**
+ * **Header Groups (Gruplanmış Başlıklar)**
+ *
+ * Kolonların gruplandığı ve hiyerarşik bir yapıda gösterildiği örnek.
+ * İlişkili kolonlar bir üst başlık altında toplanabilir.
+ *
+ * **Özellikler:**
+ * - İç içe kolon grupları
+ * - Hiyerarşik başlık yapısı
+ * - Footer desteği
+ * - Dinamik kolon grupları
+ *
+ * **Kullanım Senaryoları:**
+ * - İlişkili verileri gruplama
+ * - Karmaşık veri yapıları
+ * - Organize tablo görünümü
+ * - İstatistiksel raporlar
+ */
 export const HeaderGroups: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
 
@@ -486,7 +591,31 @@ export const HeaderGroups: Story = {
   },
 };
 
+/**
+ * **Drag & Drop Kolon Sıralama**
+ *
+ * Kolonların sürükle-bırak (drag & drop) ile yeniden sıralanabildiği örnek.
+ * Kullanıcılar kolon başlıklarını sürükleyerek istediği sıraya yerleştirebilir.
+ *
+ * **Özellikler:**
+ * - Drag & drop kolon sıralama
+ * - Görsel geri bildirim
+ * - Kolon sırası state yönetimi
+ * - @dnd-kit entegrasyonu
+ *
+ * **Gereksinimler:**
+ * - `@dnd-kit/core`
+ * - `@dnd-kit/sortable`
+ * - `@dnd-kit/modifiers`
+ * - `@dnd-kit/utilities`
+ *
+ * **Kullanım Senaryoları:**
+ * - Kullanıcı tercihleri
+ * - Özelleştirilebilir tablolar
+ * - Dinamik görünüm yönetimi
+ */
 export const Reorderable: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
     const [columnsOrder, setColumnsOrder] = useState<string[]>([
@@ -517,7 +646,27 @@ export const Reorderable: Story = {
   },
 };
 
+/**
+ * **Satır Seçimi (Row Selection)**
+ *
+ * Kullanıcıların tablodaki satırları seçebildiği örnek.
+ * Tekli veya çoklu satır seçimi yapılabilir.
+ *
+ * **Özellikler:**
+ * - Checkbox ile satır seçimi
+ * - Tümünü seç/kaldır
+ * - Seçili satır state yönetimi
+ * - Seçim callback'leri
+ * - Koşullu satır seçilebilirliği
+ *
+ * **Kullanım Senaryoları:**
+ * - Toplu işlemler (silme, düzenleme, vb.)
+ * - Veri export
+ * - Çoklu seçim işlemleri
+ * - Kullanıcı etkileşimli tablolar
+ */
 export const RowSelection: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
     const [rowSelection, setRowSelection] = useState<Record<string, boolean>>(
@@ -541,7 +690,27 @@ export const RowSelection: Story = {
   },
 };
 
+/**
+ * **Kolon Boyutlandırma (Column Resizing)**
+ *
+ * Kolonların genişliğinin interaktif olarak ayarlanabildiği örnek.
+ * Kullanıcılar kolon kenarlarından sürükleyerek genişlik ayarlayabilir.
+ *
+ * **Özellikler:**
+ * - Drag ile kolon genişlik ayarlama
+ * - Min/max genişlik sınırları
+ * - Varsayılan kolon genişlikleri
+ * - Kolon genişlik state yönetimi
+ * - Bazı kolonlar için resize devre dışı bırakılabilir
+ *
+ * **Kullanım Senaryoları:**
+ * - Kullanıcı tercihleri
+ * - Responsive tablo tasarımı
+ * - İçerik uzunluğuna göre ayarlama
+ * - Özelleştirilebilir görünümler
+ */
 export const ColumnSizing: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
     const [columnSizing, setColumnSizing] = useState<Record<string, number>>(
@@ -677,7 +846,26 @@ export const ColumnSizing: Story = {
   },
 };
 
+/**
+ * **Performans Optimizasyonlu Kolon Boyutlandırma**
+ *
+ * Büyük veri setleri için optimize edilmiş kolon boyutlandırma örneği.
+ * `columnResizeMode: "onEnd"` kullanarak sadece sürükleme bittiğinde güncelleme yapar.
+ *
+ * **Özellikler:**
+ * - Performans optimizasyonu
+ * - Sadece drag end'de güncelleme
+ * - Büyük veri setleri için uygun
+ * - Daha az re-render
+ *
+ * **Kullanım Senaryoları:**
+ * - 1000+ satırlı tablolar
+ * - Karmaşık cell render'ları
+ * - Performans kritik uygulamalar
+ * - Büyük veri setleri
+ */
 export const ColumnSizingPerformant: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
     const [columnSizing, setColumnSizing] = useState<Record<string, number>>(
@@ -712,7 +900,28 @@ export const ColumnSizingPerformant: Story = {
   },
 };
 
+/**
+ * **Güvenlik Özellikleri Demo**
+ *
+ * DataTable'ın güvenlik özelliklerini gösteren demo. XSS, SQL injection ve
+ * diğer güvenlik tehditlerine karşı koruma sağlar.
+ *
+ * **Güvenlik Özellikleri:**
+ * - XSS (Cross-Site Scripting) koruması
+ * - SQL injection önleme
+ * - Input sanitization
+ * - Number validation ve bounds checking
+ * - Rate limiting
+ * - Content length validation
+ *
+ * **Kullanım Senaryoları:**
+ * - Kullanıcı girdilerinin işlendiği uygulamalar
+ * - Public-facing uygulamalar
+ * - Güvenlik kritik sistemler
+ * - Veri doğrulama gerektiren uygulamalar
+ */
 export const SecurityDemo: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
     const [securityLogs, setSecurityLogs] = useState<string[]>([]);
@@ -826,7 +1035,34 @@ export const SecurityDemo: Story = {
   },
 };
 
+/**
+ * **Uluslararasılaştırma (i18n) Demo**
+ *
+ * DataTable'ın çoklu dil desteğini gösteren demo. 5 farklı dil desteği
+ * ile tablo arayüzü tamamen çevrilebilir.
+ *
+ * **Desteklenen Diller:**
+ * - 🇬🇧 English (en)
+ * - 🇹🇷 Turkish (tr)
+ * - 🇪🇸 Spanish (es)
+ * - 🇫🇷 French (fr)
+ * - 🇩🇪 German (de)
+ *
+ * **Özellikler:**
+ * - Dinamik dil değiştirme
+ * - Tüm UI metinlerinin çevirisi
+ * - Pagination metinleri
+ * - Filter metinleri
+ * - Selection metinleri
+ *
+ * **Kullanım Senaryoları:**
+ * - Çok dilli uygulamalar
+ * - Global uygulamalar
+ * - Kullanıcı tercihine göre dil seçimi
+ * - Lokalizasyon gerektiren projeler
+ */
 export const I18nDemo: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
     const [currentLanguage, setCurrentLanguage] =
@@ -1043,7 +1279,26 @@ const customTranslations: TableTranslations = {
   },
 };
 
+/**
+ * **Kolon Görünürlüğü (Column Visibility)**
+ *
+ * Kolonların gösterilip gizlenebildiği örnek. Kullanıcılar hangi kolonların
+ * görünür olacağını kontrol edebilir.
+ *
+ * **Özellikler:**
+ * - Kolon göster/gizle kontrolü
+ * - State yönetimi
+ * - Dinamik kolon görünürlüğü
+ * - Kullanıcı tercihleri
+ *
+ * **Kullanım Senaryoları:**
+ * - Özelleştirilebilir tablo görünümleri
+ * - Kullanıcı tercihlerini kaydetme
+ * - Responsive tasarım
+ * - Gereksiz kolonları gizleme
+ */
 export const ColumnVisibility: Story = {
+  args: {} as any,
   render: () => {
     const [data, setData] = useState<Person[]>(defaultData);
     const [columnVisibility, setColumnVisibility] = useState<
@@ -1071,7 +1326,32 @@ export const ColumnVisibility: Story = {
   },
 };
 
+/**
+ * **Tüm Özellikler (All Features)**
+ *
+ * DataTable'ın tüm özelliklerinin bir arada kullanıldığı kapsamlı örnek.
+ * Bu story, tüm özelliklerin birlikte nasıl çalıştığını gösterir.
+ *
+ * **İçerilen Özellikler:**
+ * - ✅ Filtreleme (text, range, select, boolean)
+ * - ✅ Sıralama (multi-column)
+ * - ✅ Pagination (advanced mode)
+ * - ✅ Kolon sıralama (drag & drop)
+ * - ✅ Kolon boyutlandırma
+ * - ✅ Satır seçimi
+ * - ✅ Kolon görünürlüğü
+ * - ✅ Global search
+ * - ✅ Lazy loading
+ * - ✅ i18n desteği
+ *
+ * **Kullanım Senaryoları:**
+ * - Production uygulamalar
+ * - Kapsamlı veri yönetimi
+ * - Enterprise uygulamalar
+ * - Tam özellikli tablo ihtiyacı
+ */
 export const AllFeatures: Story = {
+  args: {} as any,
   render: () => {
     // Extended data for better demonstration
     const extendedData: Person[] = [
@@ -1902,6 +2182,409 @@ export const AllFeatures: Story = {
             </div>
           </div>
         )}
+      </div>
+    );
+  },
+};
+
+/**
+ * **Global Search (Global Filtreleme)**
+ *
+ * Tüm kolonlarda arama yapabilen global search özelliğini gösteren örnek.
+ * Kullanıcı tek bir arama kutusu ile tüm kolonlarda arama yapabilir.
+ *
+ * **Özellikler:**
+ * - Tüm kolonlarda arama
+ * - Fuzzy search desteği
+ * - Gerçek zamanlı filtreleme
+ * - Debounced input
+ *
+ * **Kullanım Senaryoları:**
+ * - Hızlı veri arama
+ * - Kullanıcı dostu arama deneyimi
+ * - Büyük veri setlerinde arama
+ * - Genel arama ihtiyacı
+ */
+export const GlobalFilter: Story = {
+  args: {} as any,
+  render: () => {
+    const [data, setData] = useState<Person[]>(defaultData);
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-blue-50 border border-blue-200 rounded p-4">
+          <h3 className="font-semibold text-blue-800 mb-2">🔍 Global Search</h3>
+          <p className="text-sm text-blue-700">
+            Use the search box above the table to search across all columns. The
+            search uses fuzzy matching for better results.
+          </p>
+        </div>
+
+        <DataTable<Person>
+          tableOptions={{
+            data: data,
+            columns: columns as ColumnDef<Person>[],
+            globalFilter: {
+              show: true,
+            },
+            filter: true,
+          }}
+        />
+      </div>
+    );
+  },
+};
+
+/**
+ * **Filtre Tipleri (Filter Types)**
+ *
+ * DataTable'ın desteklediği tüm filtre tiplerini gösteren örnek.
+ * Her filtre tipinin nasıl kullanıldığını ve özelliklerini gösterir.
+ *
+ * **Desteklenen Filtre Tipleri:**
+ * - 📝 Text Filter: Metin araması
+ * - 🔢 Range Filter: Sayısal aralık filtreleme
+ * - 📋 Select Filter: Dropdown seçim
+ * - ☑️ Boolean Filter: Evet/Hayır seçimi
+ * - 🎨 Custom Filter: Özel filtre component'i
+ *
+ * **Kullanım Senaryoları:**
+ * - Farklı veri tipleri için filtreleme
+ * - Karmaşık filtreleme ihtiyaçları
+ * - Özel filtre mantığı
+ */
+export const FilteringTypes: Story = {
+  args: {} as any,
+  render: () => {
+    const [data, setData] = useState<Person[]>(defaultData);
+
+    const filterColumns: ColumnDef<Person>[] = [
+      {
+        header: "Name",
+        id: "firstName",
+        accessorKey: "firstName",
+        cell: (info) => info.getValue(),
+        filter: {
+          type: "text",
+          field: "firstName",
+          placeholder: "Search first name...",
+          className: "w-32",
+        },
+      },
+      {
+        id: "age",
+        accessorKey: "age",
+        header: "Age",
+        filter: {
+          type: "range",
+          field: "age",
+          minPlaceholder: "Min age",
+          maxPlaceholder: "Max age",
+          showLimit: true,
+          minLimit: 0,
+          maxLimit: 100,
+        },
+      },
+      {
+        id: "status",
+        accessorKey: "status",
+        header: "Status",
+        cell: (info) => (info.getValue() as any).label,
+        filter: {
+          type: "select",
+          field: "status.id",
+          optionLabel: "label",
+          optionValue: "id",
+          options: [
+            { label: "In Relationship", id: "in-relationship" },
+            { label: "Single", id: "single" },
+            { label: "Complicated", id: "complicated" },
+          ],
+        },
+      },
+      {
+        id: "isActive",
+        accessorKey: "isActive",
+        header: "Is Active",
+        cell: (info) => <div>{info.getValue() ? "Active" : "Inactive"}</div>,
+        filter: {
+          type: "boolean",
+          field: "isActive",
+          trueLabel: "Active",
+          falseLabel: "Inactive",
+          allLabel: "All",
+        },
+      },
+      {
+        accessorFn: (row) => `${row.firstName} ${row.lastName}`,
+        id: "fullName",
+        header: "Full Name (Custom)",
+        cell: (info) => info.getValue(),
+        filter: {
+          type: "custom",
+          component: ({ column }) => (
+            <div>
+              <input
+                onChange={(e) => column.setFilterValue(e.target.value)}
+                value={(column.getFilterValue() as string) || ""}
+                placeholder="Custom filter..."
+                className="w-full px-2 py-1 border rounded"
+              />
+            </div>
+          ),
+          field: "fullName",
+        },
+      },
+    ];
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-green-50 border border-green-200 rounded p-4">
+          <h3 className="font-semibold text-green-800 mb-2">
+            🔍 Filter Types Demo
+          </h3>
+          <p className="text-sm text-green-700 mb-2">
+            This demo showcases all available filter types:
+          </p>
+          <ul className="text-sm text-green-700 space-y-1 list-disc list-inside">
+            <li>
+              <strong>Text Filter:</strong> Search text in First Name column
+            </li>
+            <li>
+              <strong>Range Filter:</strong> Filter Age by min/max values
+            </li>
+            <li>
+              <strong>Select Filter:</strong> Choose Status from dropdown
+            </li>
+            <li>
+              <strong>Boolean Filter:</strong> Filter Is Active (Yes/No/All)
+            </li>
+            <li>
+              <strong>Custom Filter:</strong> Custom filter component for Full
+              Name
+            </li>
+          </ul>
+        </div>
+
+        <DataTable<Person>
+          tableOptions={{
+            data: data,
+            columns: filterColumns,
+            filter: true,
+            showFilterButton: true,
+          }}
+        />
+      </div>
+    );
+  },
+};
+
+/**
+ * **Sıralama (Sorting)**
+ *
+ * Kolon sıralama özelliklerini gösteren örnek. Tekli ve çoklu kolon sıralaması
+ * desteğini gösterir.
+ *
+ * **Özellikler:**
+ * - Tekli kolon sıralama
+ * - Çoklu kolon sıralama (Shift + Click)
+ * - Artan/Azalan sıralama
+ * - Fuzzy sorting desteği
+ * - Sıralama göstergeleri
+ *
+ * **Kullanım Senaryoları:**
+ * - Veri analizi
+ * - Karmaşık sıralama ihtiyaçları
+ * - Kullanıcı tercihlerine göre sıralama
+ */
+export const Sorting: Story = {
+  args: {} as any,
+  render: () => {
+    const [data, setData] = useState<Person[]>(defaultData);
+    const [sorting, setSorting] = useState<any[]>([]);
+
+    const sortableColumns: ColumnDef<Person>[] = [
+      {
+        header: "Name",
+        id: "firstName",
+        accessorKey: "firstName",
+        cell: (info) => info.getValue(),
+        enableSorting: true,
+      },
+      {
+        id: "age",
+        accessorKey: "age",
+        header: "Age",
+        enableSorting: true,
+      },
+      {
+        id: "visits",
+        accessorKey: "visits",
+        header: "Visits",
+        enableSorting: true,
+      },
+      {
+        id: "progress",
+        accessorKey: "progress",
+        header: "Progress",
+        enableSorting: true,
+        sortingFn: "fuzzy",
+      },
+    ];
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-purple-50 border border-purple-200 rounded p-4">
+          <h3 className="font-semibold text-purple-800 mb-2">
+            🔄 Sorting Demo
+          </h3>
+          <p className="text-sm text-purple-700 mb-2">
+            Click on column headers to sort. Hold Shift and click for
+            multi-column sorting.
+          </p>
+          {sorting.length > 0 && (
+            <div className="mt-2">
+              <p className="text-sm font-medium text-purple-800">
+                Current Sort Order:
+              </p>
+              <ul className="text-sm text-purple-700 list-disc list-inside">
+                {sorting.map((sort, index) => (
+                  <li key={index}>
+                    {sort.id} ({sort.desc ? "Descending" : "Ascending"})
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+
+        <DataTable<Person>
+          tableOptions={{
+            data: data,
+            columns: sortableColumns,
+            sorting: sorting,
+            onSortingChange: setSorting,
+          }}
+        />
+      </div>
+    );
+  },
+};
+
+/**
+ * **Boş Durum (Empty State)**
+ *
+ * Tabloda veri olmadığında gösterilen boş durum örneği.
+ * Kullanıcıya anlamlı bir mesaj ve aksiyon önerileri sunar.
+ *
+ * **Özellikler:**
+ * - Boş veri durumu gösterimi
+ * - Özelleştirilebilir mesajlar
+ * - Aksiyon butonları
+ *
+ * **Kullanım Senaryoları:**
+ * - İlk yükleme durumları
+ * - Filtre sonucu boş
+ * - Veri yok durumları
+ */
+export const EmptyState: Story = {
+  args: {} as any,
+  render: () => {
+    const [data, setData] = useState<Person[]>([]);
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-gray-50 border border-gray-200 rounded p-4">
+          <h3 className="font-semibold text-gray-800 mb-2">
+            📭 Empty State Demo
+          </h3>
+          <p className="text-sm text-gray-700 mb-4">
+            This demo shows how the table handles empty data states.
+          </p>
+          <button
+            onClick={() => setData(data.length === 0 ? defaultData : [])}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            {data.length === 0 ? "Load Data" : "Clear Data"}
+          </button>
+        </div>
+
+        <DataTable<Person>
+          tableOptions={{
+            data: data,
+            columns: columns as ColumnDef<Person>[],
+            filter: true,
+          }}
+        />
+      </div>
+    );
+  },
+};
+
+/**
+ * **Özel Component'ler (Custom Components)**
+ *
+ * DataTable'ın varsayılan component'lerinin özel component'lerle
+ * değiştirilebildiğini gösteren örnek.
+ *
+ * **Özelleştirilebilir Component'ler:**
+ * - TableComponent
+ * - TableHeaderComponent
+ * - TableRowComponent
+ * - TableCellComponent
+ * - TableHeadComponent
+ * - TableBodyComponent
+ * - TableFooterComponent
+ *
+ * **Kullanım Senaryoları:**
+ * - Özel stil gereksinimleri
+ * - Mevcut component kütüphaneleri ile entegrasyon
+ * - Özel davranışlar
+ * - Tema uyumluluğu
+ */
+export const CustomComponents: Story = {
+  args: {} as any,
+  render: () => {
+    const [data, setData] = useState<Person[]>(defaultData);
+
+    // Özel row component - hover efekti ile
+    const CustomRow = ({ children, ...props }: any) => (
+      <tr
+        {...props}
+        className="hover:bg-blue-50 transition-colors duration-200"
+      >
+        {children}
+      </tr>
+    );
+
+    // Özel cell component - özel padding ile
+    const CustomCell = ({ children, ...props }: any) => (
+      <td {...props} className="px-6 py-4">
+        {children}
+      </td>
+    );
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-indigo-50 border border-indigo-200 rounded p-4">
+          <h3 className="font-semibold text-indigo-800 mb-2">
+            🎨 Custom Components Demo
+          </h3>
+          <p className="text-sm text-indigo-700">
+            This demo shows how to use custom components for table rows and
+            cells. Notice the custom hover effect and padding.
+          </p>
+        </div>
+
+        <DataTable<Person>
+          tableOptions={{
+            data: data,
+            columns: columns as ColumnDef<Person>[],
+            filter: true,
+          }}
+          TableRowComponent={CustomRow}
+          TableCellComponent={CustomCell}
+        />
       </div>
     );
   },
