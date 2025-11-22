@@ -178,7 +178,7 @@ import {
 import {
   DndWrapper,
   SortableContextWrapper,
-  useSensorsLazy,
+  SensorsCreatorLazy,
   lazyLoadDndUtilities,
 } from "./dnd-wrapper";
 import { Checkbox } from "../../ui/checkbox";
@@ -201,7 +201,66 @@ type DraggableFilterCellProps<TData> = {
   readonly isTableDragging?: boolean;
 };
 
-// DraggableFilterCell component for filter row (non-draggable version)
+// Inner component that always calls hooks for filter cells
+function DraggableFilterCellWithHooks<TData>({
+  header,
+  colClassName = "",
+  TableHeadComponent,
+  translations,
+  isTableDragging = false,
+  useSortableHook,
+  CSSUtil,
+}: DraggableFilterCellProps<TData> & {
+  useSortableHook: any;
+  CSSUtil: any;
+}) {
+  // Always call hooks - they're guaranteed to be available here
+  const { isDragging, setNodeRef, transform } = useSortableHook({
+    id: header.column.id,
+  });
+
+  const style: React.CSSProperties = {
+    opacity: isDragging ? 0.8 : 1,
+    position: "relative",
+    transform: CSSUtil.Translate.toString(transform),
+    transition:
+      isDragging || isTableDragging ? "none" : "transform 0.05s ease-out",
+    zIndex: isDragging ? 1 : 0,
+    width: header.getSize(),
+    minWidth: header.column.columnDef.minSize || 100,
+    maxWidth: header.column.columnDef.maxSize || "none",
+  };
+
+  return (
+    <TableHeadComponent
+      key={header.column.id}
+      colSpan={header.colSpan}
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        (header.column.columnDef as ColumnDef<TData>).headerClassName,
+        (header.column.columnDef as ColumnDef<TData>).className,
+        colClassName
+      )}
+    >
+      <div className="w-full">
+        {flexRender(
+          !header.isPlaceholder && header.column.getCanFilter() ? (
+            <Suspense fallback={<div className="h-9 w-full" />}>
+              <FilterInputLazy
+                column={header.column as unknown as Column<any>}
+                translations={translations}
+              />
+            </Suspense>
+          ) : null,
+          header.getContext()
+        )}
+      </div>
+    </TableHeadComponent>
+  );
+}
+
+// DraggableFilterCell component for filter row
 function DraggableFilterCell<TData>({
   header,
   colClassName = "",
@@ -210,70 +269,36 @@ function DraggableFilterCell<TData>({
   isTableDragging = false,
   reorderable = false,
 }: DraggableFilterCellProps<TData> & { reorderable?: boolean }) {
-  // If reorderable, use lazy loaded version
-  if (reorderable) {
-    const [useSortable, setUseSortable] = React.useState<any>(null);
-    const [CSS, setCSS] = React.useState<any>(null);
-    const [isLoaded, setIsLoaded] = React.useState(false);
+  const [useSortableFn, setUseSortableFn] = React.useState<any>(null);
+  const [CSSFn, setCSSFn] = React.useState<any>(null);
+  const [isLoaded, setIsLoaded] = React.useState(false);
 
-    React.useEffect(() => {
-      if (reorderable && !isLoaded) {
-        Promise.all([
-          import("@dnd-kit/sortable").then((mod) => mod.useSortable),
-          import("@dnd-kit/utilities").then((mod) => mod.CSS),
-        ]).then(([useSortableFn, CSSUtil]) => {
-          setUseSortable(() => useSortableFn);
-          setCSS(() => CSSUtil);
-          setIsLoaded(true);
-        });
-      }
-    }, [reorderable, isLoaded]);
-
-    if (isLoaded && useSortable && CSS) {
-      const { isDragging, setNodeRef, transform } = useSortable({
-        id: header.column.id,
+  React.useEffect(() => {
+    if (reorderable && !isLoaded) {
+      Promise.all([
+        import("@dnd-kit/sortable").then((mod) => mod.useSortable),
+        import("@dnd-kit/utilities").then((mod) => mod.CSS),
+      ]).then(([useSortableFn, CSSUtil]) => {
+        setUseSortableFn(() => useSortableFn);
+        setCSSFn(() => CSSUtil);
+        setIsLoaded(true);
       });
-
-      const style: React.CSSProperties = {
-        opacity: isDragging ? 0.8 : 1,
-        position: "relative",
-        transform: CSS.Translate.toString(transform),
-        transition:
-          isDragging || isTableDragging ? "none" : "transform 0.05s ease-out",
-        zIndex: isDragging ? 1 : 0,
-        width: header.getSize(),
-        minWidth: header.column.columnDef.minSize || 100,
-        maxWidth: header.column.columnDef.maxSize || "none",
-      };
-
-      return (
-        <TableHeadComponent
-          key={header.column.id}
-          colSpan={header.colSpan}
-          ref={setNodeRef}
-          style={style}
-          className={cn(
-            (header.column.columnDef as ColumnDef<TData>).headerClassName,
-            (header.column.columnDef as ColumnDef<TData>).className,
-            colClassName
-          )}
-        >
-          <div className="w-full">
-            {flexRender(
-              !header.isPlaceholder && header.column.getCanFilter() ? (
-                <Suspense fallback={<div className="h-9 w-full" />}>
-                  <FilterInputLazy
-                    column={header.column as unknown as Column<any>}
-                    translations={translations}
-                  />
-                </Suspense>
-              ) : null,
-              header.getContext()
-            )}
-          </div>
-        </TableHeadComponent>
-      );
     }
+  }, [reorderable, isLoaded]);
+
+  // If reorderable and loaded, use hook-using component
+  if (reorderable && isLoaded && useSortableFn && CSSFn) {
+    return (
+      <DraggableFilterCellWithHooks
+        header={header}
+        colClassName={colClassName}
+        TableHeadComponent={TableHeadComponent}
+        translations={translations}
+        isTableDragging={isTableDragging}
+        useSortableHook={useSortableFn}
+        CSSUtil={CSSFn}
+      />
+    );
   }
 
   // Non-draggable version (fallback or when reorderable is false)
@@ -801,32 +826,24 @@ export function DataTable<TData>({
     arrayMove: any;
     horizontalListSortingStrategy: any;
   } | null>(null);
-  const [sensors, setSensors] = React.useState<any[]>([]);
   const [isDndLoaded, setIsDndLoaded] = React.useState(!isReorderable);
 
   React.useEffect(() => {
     if (isReorderable && !isDndLoaded) {
-      Promise.all([
-        lazyLoadDndUtilities(),
-        import("@dnd-kit/core").then((mod) => ({
-          MouseSensor: mod.MouseSensor,
-          TouchSensor: mod.TouchSensor,
-          KeyboardSensor: mod.KeyboardSensor,
-          useSensor: mod.useSensor,
-          useSensors: mod.useSensors,
-        })),
-      ]).then(([utils, dndKit]) => {
+      lazyLoadDndUtilities().then((utils) => {
         setDndUtilities(utils);
-        const sensors = dndKit.useSensors(
-          dndKit.useSensor(dndKit.MouseSensor, {}),
-          dndKit.useSensor(dndKit.TouchSensor, {}),
-          dndKit.useSensor(dndKit.KeyboardSensor, {})
-        );
-        setSensors(sensors);
         setIsDndLoaded(true);
       });
     }
   }, [isReorderable, isDndLoaded]);
+
+  // Store sensors state - will be set by SensorsCreator component
+  const [sensors, setSensors] = React.useState<any[]>([]);
+  
+  // Memoize the callback to avoid recreating it on every render
+  const handleSensorsReady = useCallback((newSensors: any[]) => {
+    setSensors(newSensors);
+  }, []);
 
   const handleDragEnd = useCallback(
     (event: any) => {
@@ -1253,17 +1270,30 @@ export function DataTable<TData>({
   );
 
   // Wrap with DndContext only if reorderable is enabled and loaded
-  if (isReorderable && isDndLoaded && dndUtilities && sensors.length > 0) {
+  if (isReorderable && isDndLoaded && dndUtilities) {
     return (
-      <DndWrapper
-        onDragEnd={handleDragEnd}
-        onDragStart={handleDragStart}
-        sensors={sensors}
-        collisionDetection={dndUtilities.closestCenter}
-        modifiers={[dndUtilities.restrictToHorizontalAxis]}
-      >
-        {tableContent}
-      </DndWrapper>
+      <>
+        {/* Create sensors using hooks in component body */}
+        {isDndLoaded && (
+          <Suspense fallback={null}>
+            <SensorsCreatorLazy onSensorsReady={handleSensorsReady} />
+          </Suspense>
+        )}
+        {/* Render DND wrapper when sensors are ready */}
+        {sensors.length > 0 ? (
+          <DndWrapper
+            onDragEnd={handleDragEnd}
+            onDragStart={handleDragStart}
+            sensors={sensors}
+            collisionDetection={dndUtilities.closestCenter}
+            modifiers={[dndUtilities.restrictToHorizontalAxis]}
+          >
+            {tableContent}
+          </DndWrapper>
+        ) : (
+          tableContent
+        )}
+      </>
     );
   }
 

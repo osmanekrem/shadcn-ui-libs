@@ -75,33 +75,47 @@ export function SortableContextWrapper({
   );
 }
 
-// Lazy load sensors
-export const useSensorsLazy = () => {
-  const [sensors, setSensors] = React.useState<any[]>([]);
-  const [isLoaded, setIsLoaded] = React.useState(false);
-
-  React.useEffect(() => {
-    Promise.all([
-      import("@dnd-kit/core").then((mod) => ({
-        MouseSensor: mod.MouseSensor,
-        TouchSensor: mod.TouchSensor,
-        KeyboardSensor: mod.KeyboardSensor,
-        useSensor: mod.useSensor,
-        useSensors: mod.useSensors,
-      })),
-    ]).then(([dndKit]) => {
-      const sensors = dndKit.useSensors(
-        dndKit.useSensor(dndKit.MouseSensor, {}),
-        dndKit.useSensor(dndKit.TouchSensor, {}),
-        dndKit.useSensor(dndKit.KeyboardSensor, {})
-      );
-      setSensors(sensors);
-      setIsLoaded(true);
-    });
-  }, []);
-
-  return { sensors, isLoaded };
+// Component that creates sensors using hooks
+// This component lazy loads dnd-kit and calls hooks in component body
+type SensorsCreatorProps = {
+  onSensorsReady: (sensors: any[]) => void;
 };
+
+// Lazy load the sensors creator component
+export const SensorsCreatorLazy = lazy(() =>
+  import("@dnd-kit/core").then((mod) => {
+    const SensorsCreatorInner = ({ onSensorsReady }: SensorsCreatorProps) => {
+      // Call hooks in component body - this is the correct way
+      const sensors = mod.useSensors(
+        mod.useSensor(mod.MouseSensor, {}),
+        mod.useSensor(mod.TouchSensor, {}),
+        mod.useSensor(mod.KeyboardSensor, {})
+      );
+
+      // Use ref to track if sensors have been set to avoid infinite loops
+      const sensorsSetRef = React.useRef(false);
+      const onSensorsReadyRef = React.useRef(onSensorsReady);
+
+      // Keep callback ref updated
+      React.useEffect(() => {
+        onSensorsReadyRef.current = onSensorsReady;
+      }, [onSensorsReady]);
+
+      // Set sensors only once when they're ready
+      React.useEffect(() => {
+        if (!sensorsSetRef.current && sensors.length > 0) {
+          sensorsSetRef.current = true;
+          onSensorsReadyRef.current(sensors);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, [sensors.length]); // Only depend on sensors.length to avoid infinite loops
+
+      return null;
+    };
+
+    return { default: SensorsCreatorInner };
+  })
+);
 
 // Lazy load utilities
 export const lazyLoadDndUtilities = async () => {

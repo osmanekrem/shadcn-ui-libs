@@ -90,55 +90,34 @@ function NonDraggableHeader<T>({
   );
 }
 
-// Draggable header component (lazy loaded)
-function DraggableHeaderInner<T>({
+// Inner component that always calls hooks
+// This component is only rendered when modules are loaded
+function DraggableHeaderWithHooks<T>({
   header,
   TableHeadComponent = TableHead,
   colClassName = "",
-  reorderable = false,
   enableColumnResizing = false,
-}: DraggableHeaderProps<T>) {
-  const [useSortable, setUseSortable] = React.useState<any>(null);
-  const [CSS, setCSS] = React.useState<any>(null);
-  const [isLoaded, setIsLoaded] = React.useState(false);
-
-  React.useEffect(() => {
-    if (reorderable && !isLoaded) {
-      Promise.all([
-        import("@dnd-kit/sortable").then((mod) => mod.useSortable),
-        import("@dnd-kit/utilities").then((mod) => mod.CSS),
-      ]).then(([useSortableFn, CSSUtil]) => {
-        setUseSortable(() => useSortableFn);
-        setCSS(() => CSSUtil);
-        setIsLoaded(true);
-      });
-    }
-  }, [reorderable, isLoaded]);
-
+  useSortableHook,
+  CSSUtil,
+}: DraggableHeaderProps<T> & {
+  useSortableHook: any;
+  CSSUtil: any;
+}) {
   const isSelectionColumn = header.column.id === "selection";
 
-  // If not loaded yet or not reorderable, use non-draggable version
-  if (!reorderable || !isLoaded || isSelectionColumn) {
-    return (
-      <NonDraggableHeader
-        header={header}
-        TableHeadComponent={TableHeadComponent}
-        colClassName={colClassName}
-        enableColumnResizing={enableColumnResizing}
-      />
-    );
-  }
-
+  // Always call hooks - they're guaranteed to be available here
   const { attributes, isDragging, listeners, setNodeRef, transform } =
-    useSortable({
+    useSortableHook({
       id: header.column.id,
-      disabled: isSelectionColumn || !reorderable,
+      disabled: isSelectionColumn,
     });
 
   const style: React.CSSProperties = {
     opacity: isDragging ? 0.8 : 1,
     position: "relative",
-    transform: isSelectionColumn ? undefined : CSS.Translate.toString(transform),
+    transform: isSelectionColumn
+      ? undefined
+      : CSSUtil.Translate.toString(transform),
     transition: isSelectionColumn
       ? undefined
       : isDragging
@@ -191,8 +170,7 @@ function DraggableHeaderInner<T>({
                 <ArrowDownUp className="inline size-4 flex-shrink-0" />
               )}
             </div>
-            {reorderable &&
-              header.column.id !== "selection" &&
+            {header.column.id !== "selection" &&
               ((header.column.columnDef as ColumnDef<T>).reorderable ??
                 true) && (
                 <Button
@@ -213,6 +191,60 @@ function DraggableHeaderInner<T>({
   );
 }
 
+// Draggable header component (lazy loaded)
+// This component loads modules and conditionally renders the hook-using component
+function DraggableHeaderInner<T>({
+  header,
+  TableHeadComponent = TableHead,
+  colClassName = "",
+  reorderable = false,
+  enableColumnResizing = false,
+}: DraggableHeaderProps<T>) {
+  const [useSortableFn, setUseSortableFn] = React.useState<any>(null);
+  const [CSSFn, setCSSFn] = React.useState<any>(null);
+  const [isLoaded, setIsLoaded] = React.useState(false);
+
+  React.useEffect(() => {
+    if (reorderable && !isLoaded) {
+      Promise.all([
+        import("@dnd-kit/sortable").then((mod) => mod.useSortable),
+        import("@dnd-kit/utilities").then((mod) => mod.CSS),
+      ]).then(([useSortableFn, CSSUtil]) => {
+        setUseSortableFn(() => useSortableFn);
+        setCSSFn(() => CSSUtil);
+        setIsLoaded(true);
+      });
+    }
+  }, [reorderable, isLoaded]);
+
+  const isSelectionColumn = header.column.id === "selection";
+
+  // If not loaded yet or not reorderable, use non-draggable version
+  if (!reorderable || !isLoaded || isSelectionColumn) {
+    return (
+      <NonDraggableHeader
+        header={header}
+        TableHeadComponent={TableHeadComponent}
+        colClassName={colClassName}
+        enableColumnResizing={enableColumnResizing}
+      />
+    );
+  }
+
+  // Render component that uses hooks - hooks are always called in same order
+  return (
+    <DraggableHeaderWithHooks
+      header={header}
+      TableHeadComponent={TableHeadComponent}
+      colClassName={colClassName}
+      enableColumnResizing={enableColumnResizing}
+      useSortableHook={useSortableFn}
+      CSSUtil={CSSFn}
+      reorderable={reorderable}
+    />
+  );
+}
+
 export function DraggableHeaderLazy<T>(props: DraggableHeaderProps<T>) {
   // If not reorderable, use non-draggable version immediately
   if (!props.reorderable) {
@@ -227,6 +259,61 @@ export function DraggableHeaderLazy<T>(props: DraggableHeaderProps<T>) {
   );
 }
 
+// Inner component for table cells that always calls hooks
+function DraggableTableCellWithHooks<T>({
+  cell,
+  colClassName = "",
+  TableCellComponent = TableCell,
+  useSortableHook,
+  CSSUtil,
+}: {
+  cell: Cell<T, unknown>;
+  colClassName?: string;
+  TableCellComponent?: React.ElementType;
+  useSortableHook: any;
+  CSSUtil: any;
+}) {
+  const isSelectionColumn = cell.column.id === "selection";
+
+  // Always call hooks - they're guaranteed to be available here
+  const { isDragging, setNodeRef, transform } = useSortableHook({
+    id: cell.column.id,
+    disabled: isSelectionColumn,
+  });
+
+  const style: React.CSSProperties = {
+    opacity: isDragging ? 0.8 : 1,
+    position: "relative",
+    transform: isSelectionColumn
+      ? undefined
+      : CSSUtil.Translate.toString(transform),
+    transition: isSelectionColumn
+      ? undefined
+      : isDragging
+        ? "none"
+        : "transform 0.05s ease-out",
+    zIndex: isDragging ? 1 : 0,
+    width: cell.column.getSize(),
+    minWidth: cell.column.columnDef.minSize || 100,
+    maxWidth: cell.column.columnDef.maxSize || "none",
+  };
+
+  return (
+    <TableCellComponent
+      style={style}
+      ref={setNodeRef}
+      className={cn(
+        (cell.column.columnDef as ColumnDef<T>).className,
+        colClassName
+      )}
+    >
+      <div className="truncate">
+        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+      </div>
+    </TableCellComponent>
+  );
+}
+
 export function DraggableTableCellLazy<T>({
   cell,
   colClassName = "",
@@ -238,8 +325,8 @@ export function DraggableTableCellLazy<T>({
   TableCellComponent?: React.ElementType;
   reorderable?: boolean;
 }) {
-  const [useSortable, setUseSortable] = React.useState<any>(null);
-  const [CSS, setCSS] = React.useState<any>(null);
+  const [useSortableFn, setUseSortableFn] = React.useState<any>(null);
+  const [CSSFn, setCSSFn] = React.useState<any>(null);
   const [isLoaded, setIsLoaded] = React.useState(false);
 
   React.useEffect(() => {
@@ -248,8 +335,8 @@ export function DraggableTableCellLazy<T>({
         import("@dnd-kit/sortable").then((mod) => mod.useSortable),
         import("@dnd-kit/utilities").then((mod) => mod.CSS),
       ]).then(([useSortableFn, CSSUtil]) => {
-        setUseSortable(() => useSortableFn);
-        setCSS(() => CSSUtil);
+        setUseSortableFn(() => useSortableFn);
+        setCSSFn(() => CSSUtil);
         setIsLoaded(true);
       });
     }
@@ -277,39 +364,15 @@ export function DraggableTableCellLazy<T>({
     );
   }
 
-  const { isDragging, setNodeRef, transform } = useSortable({
-    id: cell.column.id,
-    disabled: isSelectionColumn,
-  });
-
-  const style: React.CSSProperties = {
-    opacity: isDragging ? 0.8 : 1,
-    position: "relative",
-    transform: isSelectionColumn ? undefined : CSS.Translate.toString(transform),
-    transition: isSelectionColumn
-      ? undefined
-      : isDragging
-        ? "none"
-        : "transform 0.05s ease-out",
-    zIndex: isDragging ? 1 : 0,
-    width: cell.column.getSize(),
-    minWidth: cell.column.columnDef.minSize || 100,
-    maxWidth: cell.column.columnDef.maxSize || "none",
-  };
-
+  // Render component that uses hooks - hooks are always called in same order
   return (
-    <TableCellComponent
-      style={style}
-      ref={setNodeRef}
-      className={cn(
-        (cell.column.columnDef as ColumnDef<T>).className,
-        colClassName
-      )}
-    >
-      <div className="truncate">
-        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-      </div>
-    </TableCellComponent>
+    <DraggableTableCellWithHooks
+      cell={cell}
+      colClassName={colClassName}
+      TableCellComponent={TableCellComponent}
+      useSortableHook={useSortableFn}
+      CSSUtil={CSSFn}
+    />
   );
 }
 
