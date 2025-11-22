@@ -2,7 +2,7 @@
 
 import React, { InputHTMLAttributes, useEffect, useState, useRef } from "react";
 import { Input } from "../ui/input";
-import { sanitizeSearchInput } from "../../lib/security";
+import { sanitizeSearchInput } from '@/lib/security';
 
 // Simple rate limiter for input changes
 const useRateLimit = (limit: number = 10, windowMs: number = 1000) => {

@@ -28,7 +28,7 @@ import Logo from "@/components/layout/logo";
 
 export default function Home() {
   return (
-    <div className="flex flex-col h-full min-h-svh overflow-y-auto">
+    <div className="flex flex-col h-full min-h-svh overflow-y-auto w-full">
       {/* Hero Section */}
       <section className="relative flex min-h-screen w-full flex-col items-start justify-start overflow-hidden">
         <BackgroundRippleEffect />

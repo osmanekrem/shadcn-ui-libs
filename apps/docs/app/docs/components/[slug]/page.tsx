@@ -15,6 +15,13 @@ import { Download, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { readFile } from "fs/promises";
 import { join } from "path";
+import { DataTable } from "@/components/custom/datatable";
+import {
+  BasicExample,
+  FilteringExample,
+  SelectionExample,
+  ReorderingExample,
+} from "@/components/custom/datatable-examples";
 
 const components = {
   Button,
@@ -28,6 +35,11 @@ const components = {
   TabsList,
   TabsTrigger,
   Preview,
+  DataTable,
+  BasicExample,
+  FilteringExample,
+  SelectionExample,
+  ReorderingExample,
   Download,
   ArrowRight,
   Link,

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "components": {
+    "datatable": {
+      "name": "datatable",
+      "type": "components:custom",
+      "description": "A powerful, feature-rich React table component built on top of TanStack Table v8",
+      "registryDependencies": [
+        "table",
+        "button",
+        "checkbox",
+        "input",
+        "select",
+        "dropdown-menu"
+      ],
+      "dependencies": [
+        "@tanstack/react-table",
+        "@tanstack/match-sorter-utils",
+        "@dnd-kit/core",
+        "@dnd-kit/modifiers",
+        "@dnd-kit/sortable",
+        "@dnd-kit/utilities",
+        "lucide-react"
+      ],
+      "files": [
+        {
+          "src": "src/components/custom/datatable/index.tsx",
+          "dest": "components/custom/datatable/index.tsx",
+          "type": "components:component"
+        },
+        {
+          "src": "src/components/custom/datatable/actions.ts",
+          "dest": "components/custom/datatable/actions.ts",
+          "type": "components:component"
+        },
+        {
+          "src": "src/components/custom/debounced-input.tsx",
+          "dest": "components/custom/debounced-input.tsx",
+          "type": "components:component"
+        },
+        {
+          "src": "src/components/custom/filter-input.tsx",
+          "dest": "components/custom/filter-input.tsx",
+          "type": "components:component"
+        },
+        {
+          "src": "src/components/custom/column-visibility.tsx",
+          "dest": "components/custom/column-visibility.tsx",
+          "type": "components:component"
+        },
+        {
+          "src": "src/components/custom/pagination.tsx",
+          "dest": "components/custom/pagination.tsx",
+          "type": "components:component"
+        },
+        {
+          "src": "src/components/custom/draggable-header.tsx",
+          "dest": "components/custom/draggable-header.tsx",
+          "type": "components:component"
+        },
+        {
+          "src": "src/components/custom/column-resize-handle/index.tsx",
+          "dest": "components/custom/column-resize-handle/index.tsx",
+          "type": "components:component"
+        },
+        {
+          "src": "src/lib/utils.ts",
+          "dest": "lib/utils.ts",
+          "type": "lib:utils"
+        },
+        {
+          "src": "src/lib/utils.types.ts",
+          "dest": "lib/utils.types.ts",
+          "type": "lib:utils"
+        },
+        {
+          "src": "src/lib/security.ts",
+          "dest": "lib/security.ts",
+          "type": "lib:utils"
+        },
+        {
+          "src": "src/lib/i18n.ts",
+          "dest": "lib/i18n.ts",
+          "type": "lib:utils"
+        },
+        {
+          "src": "src/types/types.ts",
+          "dest": "types/types.ts",
+          "type": "types"
+        }
+      ]
+    },
+    "multi-select": {
+      "name": "multi-select",
+      "type": "components:custom",
+      "description": "A multi-select dropdown component",
+      "registryDependencies": ["button", "dropdown-menu"],
+      "dependencies": ["lucide-react"],
+      "files": [
+        {
+          "src": "src/components/custom/multi-select.tsx",
+          "dest": "components/custom/multi-select.tsx",
+          "type": "components:component"
+        }
+      ]
+    }
+  }
+}

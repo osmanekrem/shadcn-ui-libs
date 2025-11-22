@@ -1,0 +1,372 @@
+# DataTable
+
+A powerful, feature-rich React table component built on top of TanStack Table v8 with shadcn/ui styling. Provides advanced features like filtering, sorting, pagination, column reordering, row selection, and lazy loading.
+
+## Installation
+
+```bash
+# Install required dependencies
+npm install @tanstack/react-table @tanstack/match-sorter-utils
+npm install @dnd-kit/core @dnd-kit/modifiers @dnd-kit/sortable @dnd-kit/utilities
+
+# Add component using shadcn CLI
+npx shadcn@latest add ../../packages/ui-libs/registry/datatable.json --yes
+```
+
+## Usage
+
+<Preview code={`import { DataTable } from "@/components/custom/datatable";
+import type { ColumnDef } from "@/types/types";
+
+type Person = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  age: number;
+  email: string;
+};
+
+const columns: ColumnDef<Person>[] = [
+  {
+    accessorKey: "firstName",
+    header: "First Name",
+  },
+  {
+    accessorKey: "lastName",
+    header: "Last Name",
+  },
+  {
+    accessorKey: "age",
+    header: "Age",
+  },
+  {
+    accessorKey: "email",
+    header: "Email",
+  },
+];
+
+const data: Person[] = [
+  { id: 1, firstName: "John", lastName: "Doe", age: 30, email: "john@example.com" },
+  { id: 2, firstName: "Jane", lastName: "Smith", age: 25, email: "jane@example.com" },
+  { id: 3, firstName: "Bob", lastName: "Johnson", age: 35, email: "bob@example.com" },
+  { id: 4, firstName: "Alice", lastName: "Williams", age: 28, email: "alice@example.com" },
+  { id: 5, firstName: "Charlie", lastName: "Brown", age: 32, email: "charlie@example.com" },
+];
+
+export function Example() {
+  return (
+    <DataTable
+      tableOptions={{
+        data,
+        columns,
+        pagination: {
+          pageSize: 10,
+          totalRecords: data.length,
+        },
+      }}
+    />
+  );
+}`}>
+  <BasicExample />
+</Preview>
+
+## Features
+
+- **🎨 Beautiful UI**: Built with shadcn/ui components and Tailwind CSS
+- **📊 Advanced Filtering**: Text, range, select, boolean, and custom filters
+- **🔄 Sorting**: Multi-column sorting with fuzzy search support
+- **📄 Pagination**: Flexible pagination with customizable layouts
+- **🔀 Column Reordering**: Drag and drop column reordering
+- **📏 Column Resizing**: Interactive column width adjustment
+- **✅ Row Selection**: Single and multi-row selection
+- **🔍 Global Search**: Fuzzy search across all columns
+- **⚡ Lazy Loading**: Server-side data loading support
+- **👁️ Column Visibility**: Show/hide columns dynamically
+- **🔒 Security**: Built-in XSS protection and input sanitization
+- **🌍 i18n Support**: Built-in internationalization for 5 languages
+
+## Examples
+
+### With Filtering
+
+<Preview code={`import { DataTable } from "@/components/custom/datatable";
+import type { ColumnDef } from "@/types/types";
+
+type Person = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  age: number;
+  status: "active" | "inactive";
+};
+
+const columns: ColumnDef<Person>[] = [
+  {
+    accessorKey: "firstName",
+    header: "First Name",
+    filter: {
+      type: "text",
+      field: "firstName",
+      placeholder: "Search first name...",
+    },
+  },
+  {
+    accessorKey: "lastName",
+    header: "Last Name",
+  },
+  {
+    accessorKey: "age",
+    header: "Age",
+    filter: {
+      type: "range",
+      field: "age",
+    },
+  },
+  {
+    accessorKey: "status",
+    header: "Status",
+    filter: {
+      type: "select",
+      field: "status",
+      options: [
+        { label: "Active", value: "active" },
+        { label: "Inactive", value: "inactive" },
+      ],
+      optionLabel: "label",
+      optionValue: "value",
+    },
+  },
+];
+
+const data: Person[] = [
+  { id: 1, firstName: "John", lastName: "Doe", age: 30, status: "active" },
+  { id: 2, firstName: "Jane", lastName: "Smith", age: 25, status: "inactive" },
+  { id: 3, firstName: "Bob", lastName: "Johnson", age: 35, status: "active" },
+  { id: 4, firstName: "Alice", lastName: "Williams", age: 28, status: "active" },
+];
+
+export function FilteringExample() {
+  return (
+    <DataTable
+      tableOptions={{
+        data,
+        columns,
+        filter: true,
+        showFilterButton: true,
+        globalFilter: {
+          show: true,
+        },
+        pagination: {
+          pageSize: 10,
+          totalRecords: data.length,
+        },
+      }}
+    />
+  );
+}`}>
+  <FilteringExample />
+</Preview>
+
+### With Row Selection
+
+<Preview code={`import { DataTable } from "@/components/custom/datatable";
+import type { ColumnDef } from "@/types/types";
+import { useState } from "react";
+
+type Person = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  age: number;
+};
+
+const columns: ColumnDef<Person>[] = [
+  {
+    accessorKey: "firstName",
+    header: "First Name",
+  },
+  {
+    accessorKey: "lastName",
+    header: "Last Name",
+  },
+  {
+    accessorKey: "age",
+    header: "Age",
+  },
+];
+
+const data: Person[] = [
+  { id: 1, firstName: "John", lastName: "Doe", age: 30 },
+  { id: 2, firstName: "Jane", lastName: "Smith", age: 25 },
+  { id: 3, firstName: "Bob", lastName: "Johnson", age: 35 },
+  { id: 4, firstName: "Alice", lastName: "Williams", age: 28 },
+];
+
+export function SelectionExample() {
+  const [selectedRows, setSelectedRows] = useState<Record<string, boolean>>({});
+
+  return (
+    <DataTable
+      tableOptions={{
+        data,
+        columns,
+        rowSelection: selectedRows,
+        onRowSelectionChange: setSelectedRows,
+        pagination: {
+          pageSize: 10,
+          totalRecords: data.length,
+        },
+      }}
+    />
+  );
+}`}>
+  <SelectionExample />
+</Preview>
+
+### With Column Reordering
+
+<Preview code={`import { DataTable } from "@/components/custom/datatable";
+import type { ColumnDef } from "@/types/types";
+
+type Person = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  age: number;
+};
+
+const columns: ColumnDef<Person>[] = [
+  {
+    accessorKey: "firstName",
+    header: "First Name",
+  },
+  {
+    accessorKey: "lastName",
+    header: "Last Name",
+  },
+  {
+    accessorKey: "age",
+    header: "Age",
+  },
+];
+
+const data: Person[] = [
+  { id: 1, firstName: "John", lastName: "Doe", age: 30 },
+  { id: 2, firstName: "Jane", lastName: "Smith", age: 25 },
+  { id: 3, firstName: "Bob", lastName: "Johnson", age: 35 },
+];
+
+export function ReorderingExample() {
+  return (
+    <DataTable
+      tableOptions={{
+        data,
+        columns,
+        reorderable: true,
+        pagination: {
+          pageSize: 10,
+          totalRecords: data.length,
+        },
+      }}
+    />
+  );
+}`}>
+  <ReorderingExample />
+</Preview>
+
+## API Reference
+
+### DataTable Props
+
+| Prop                   | Type                  | Description                                    |
+| ---------------------- | --------------------- | ---------------------------------------------- |
+| `tableOptions`         | `TableOptions<TData>` | Main configuration object for the table        |
+| `className`            | `string`              | Additional CSS classes for the table container |
+
+### TableOptions
+
+| Prop                   | Type                  | Description                                    |
+| ---------------------- | --------------------- | ---------------------------------------------- |
+| `data`                 | `TData[]`             | Array of data to display                       |
+| `columns`              | `ColumnDef<TData>[]`  | Column definitions                              |
+| `pagination`           | `PaginationOptions`   | Pagination configuration                       |
+| `filter`               | `boolean`             | Enable column filtering                        |
+| `globalFilter`         | `GlobalFilterType`    | Global search configuration                    |
+| `rowSelection`         | `Record<string, bool>`| Row selection state                            |
+| `reorderable`          | `boolean`             | Enable column reordering                       |
+| `columnVisibility`     | `Record<string, bool>`| Column visibility state                        |
+| `enableColumnResizing` | `boolean`             | Enable column resizing                         |
+
+### Filter Types
+
+#### Text Filter
+```tsx
+{
+  type: 'text';
+  field: string;
+  placeholder: string;
+  showList?: boolean;
+  showTotal?: boolean;
+}
+```
+
+#### Range Filter
+```tsx
+{
+  type: 'range';
+  field: string;
+  minPlaceholder?: string;
+  maxPlaceholder?: string;
+  showLimit?: boolean;
+  minLimit?: number | 'faceted';
+  maxLimit?: number | 'faceted';
+}
+```
+
+#### Select Filter
+```tsx
+{
+  type: 'select';
+  field: string;
+  options: any[];
+  optionLabel: string;
+  optionValue: string;
+  allLabel?: string;
+}
+```
+
+#### Boolean Filter
+```tsx
+{
+  type: 'boolean';
+  field: string;
+  trueLabel?: string;
+  falseLabel?: string;
+  allLabel?: string;
+}
+```
+
+## Internationalization
+
+The DataTable component supports multiple languages out of the box:
+
+- English (default)
+- Turkish
+- Spanish
+- French
+- German
+
+You can customize translations by passing a `translations` prop:
+
+```tsx
+import { turkishTranslations } from "@/lib/i18n";
+
+<DataTable
+  tableOptions={{
+    data,
+    columns,
+    translations: turkishTranslations,
+  }}
+/>
+```
+

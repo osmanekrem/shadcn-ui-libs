@@ -1,4 +1,6 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Docs - Shadcn UI Components Documentation
+
+This is a [Next.js](https://nextjs.org) documentation site for shadcn/ui components and custom components.
 
 ## Getting Started
 
@@ -16,9 +18,45 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Adding Components from Registry
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project includes a custom registry for `@tanstack-shadcn-table` components. You can add components using shadcn CLI:
+
+### Adding DataTable Component
+
+```bash
+# First, install required dependencies
+npm install @tanstack/react-table @tanstack/match-sorter-utils
+npm install @dnd-kit/core @dnd-kit/modifiers @dnd-kit/sortable @dnd-kit/utilities
+
+# Then add the component
+npx shadcn@latest add datatable --registry @tanstack-shadcn-table
+```
+
+### Adding Multi-Select Component
+
+```bash
+npx shadcn@latest add multi-select --registry @tanstack-shadcn-table
+```
+
+## Registry Configuration
+
+The registry is configured in `components.json`:
+
+```json
+{
+  "registries": {
+    "@tanstack-shadcn-table": "../../packages/ui-libs/registry/{name}.json"
+  }
+}
+```
+
+This points to the local registry in the monorepo, so make sure to build the registry first:
+
+```bash
+cd ../../packages/ui-libs
+npm run build:registry
+```
 
 ## Learn More
 

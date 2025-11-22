@@ -34,9 +34,10 @@
   ],
   "scripts": {
     "build:css": "tailwindcss -i ./src/styles/globals.css -o ./dist/styles.css --minify",
-    "build": "NODE_ENV=production npm run build:css && rollup -c",
+    "build:registry": "node scripts/build-registry.js",
+    "build": "NODE_ENV=production npm run build:css && npm run build:registry && rollup -c",
     "build:analyze": "npm run build:css && rollup -c --config-option visualizer.open=false",
-    "build:prod": "NODE_ENV=production npm run build:css && rollup -c",
+    "build:prod": "NODE_ENV=production npm run build:css && npm run build:registry && rollup -c",
     "dev": "rollup -c -w",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "name": "multi-select",
+  "type": "registry:component",
+  "description": "A multi-select dropdown component",
+  "registryDependencies": [
+    "button",
+    "dropdown-menu"
+  ],
+  "dependencies": [
+    "lucide-react"
+  ],
+  "files": [
+    {
+      "path": "components/custom/multi-select.tsx",
+      "target": "components/custom/multi-select.tsx",
+      "content": "\"use client\";\n\nimport { Button } from \"../ui/button\";\nimport {\n  DropdownMenu,\n  DropdownMenuCheckboxItem,\n  DropdownMenuContent,\n  DropdownMenuTrigger,\n} from \"../ui/dropdown-menu\";\nimport { ChevronDown } from \"lucide-react\";\nimport { Dispatch, SetStateAction } from \"react\";\n\ntype Option = { label: string; value: string };\n\ninterface ISelectProps {\n  placeholder: string;\n  options: Option[];\n  selectedOptions: string[];\n  setSelectedOptions: Dispatch<SetStateAction<string[]>>;\n}\nconst MultiSelect = ({\n  placeholder,\n  options: values,\n  selectedOptions: selectedItems,\n  setSelectedOptions: setSelectedItems,\n}: ISelectProps) => {\n  const handleSelectChange = (value: string) => {\n    if (!selectedItems.includes(value)) {\n      setSelectedItems((prev) => [...prev, value]);\n    } else {\n      const referencedArray = [...selectedItems];\n      const indexOfItemToBeRemoved = referencedArray.indexOf(value);\n      referencedArray.splice(indexOfItemToBeRemoved, 1);\n      setSelectedItems(referencedArray);\n    }\n  };\n\n  const isOptionSelected = (value: string): boolean => {\n    return selectedItems.includes(value) ? true : false;\n  };\n\n  return (\n    <>\n      <DropdownMenu>\n        <DropdownMenuTrigger asChild className=\"w-full\">\n          <Button\n            variant=\"outline\"\n            className=\"w-full flex items-center justify-between\"\n          >\n            <div>{placeholder}</div>\n            <ChevronDown className=\"h-4 w-4 opacity-50\" />\n          </Button>\n        </DropdownMenuTrigger>\n        <DropdownMenuContent\n          className=\"w-56\"\n          onCloseAutoFocus={(e) => e.preventDefault()}\n        >\n          {values.map((value: ISelectProps[\"options\"][0], index: number) => {\n            return (\n              <DropdownMenuCheckboxItem\n                onSelect={(e) => e.preventDefault()}\n                key={index}\n                checked={isOptionSelected(value.value)}\n                onCheckedChange={() => handleSelectChange(value.value)}\n              >\n                {value.label}\n              </DropdownMenuCheckboxItem>\n            );\n          })}\n        </DropdownMenuContent>\n      </DropdownMenu>\n    </>\n  );\n};\n\nexport default MultiSelect;\n",
+      "type": "registry:file"
+    }
+  ],
+  "tailwind": {
+    "config": {
+      "theme": {
+        "extend": {}
+      }
+    }
+  }
+}

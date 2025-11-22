@@ -2,7 +2,7 @@
 
 import React, { useCallback } from "react";
 import { Button } from "../ui/button";
-import { cn } from "../../lib/utils";
+import { cn } from "@/lib/utils";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -10,14 +10,14 @@ import {
   ChevronsRightIcon,
   Ellipsis,
 } from "lucide-react";
-import { PaginationOptions } from "../../types/types";
+import { PaginationOptions } from "@/types/types";
 import DebouncedInput from "./debounced-input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
 import {
   TableTranslations,
   defaultTranslations,
   createTranslator,
-} from "../../lib/i18n";
+} from "@/lib/i18n";
 
 type Props = {
   totalPages: number;

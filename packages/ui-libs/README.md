@@ -23,8 +23,31 @@ A powerful, feature-rich React table component built on top of TanStack Table v8
 
 ## 📦 Installation
 
+### Option 1: NPM Package (Recommended)
+
 ```bash
 npm install tanstack-shadcn-table
+```
+
+### Option 2: Shadcn Registry
+
+You can also install components via shadcn CLI using the custom registry:
+
+1. Add the registry to your `components.json`:
+
+```json
+{
+  "registries": {
+    "@tanstack-shadcn-table": "https://raw.githubusercontent.com/osmanekrem/tanstack-shadcn-table/main/packages/ui-libs/registry/{name}.json"
+  }
+}
+```
+
+2. Install components using shadcn CLI:
+
+```bash
+npx shadcn@latest add datatable --registry @tanstack-shadcn-table
+npx shadcn@latest add multi-select --registry @tanstack-shadcn-table
 ```
 
 ### 📎 Styles

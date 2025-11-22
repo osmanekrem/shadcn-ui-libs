@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Header } from "@tanstack/react-table";
-import { cn } from "../../../lib/utils";
+import { cn } from '@/lib/utils';
 
 interface ColumnResizeHandleProps<TData> {
   header: Header<TData, unknown>;

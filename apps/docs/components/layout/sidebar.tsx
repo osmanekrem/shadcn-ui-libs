@@ -8,6 +8,20 @@ import {
   SidebarMenuButton,
 } from "../ui/sidebar";
 
+const components = [
+  {
+    label: "DataTable",
+    href: "/docs/components/datatable",
+  },
+];
+
+const hooks = [
+  {
+    label: "useSidebar",
+    href: "/docs/hooks/useSidebar",
+  },
+];
+
 const sidebarItems = [
   {
     label: "General",
@@ -26,22 +40,12 @@ const sidebarItems = [
   {
     label: "Components",
     href: "/docs/components",
-    items: [
-      {
-        label: "Button",
-        href: "/docs/components/button",
-      },
-    ],
+    items: components,
   },
   {
     label: "Hooks",
     href: "/docs/hooks",
-    items: [
-      {
-        label: "useSidebar",
-        href: "/docs/hooks/useSidebar",
-      },
-    ],
+    items: hooks,
   },
 ];
 

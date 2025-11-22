@@ -1,0 +1,136 @@
+# DataTable API
+
+Complete API reference for the DataTable component.
+
+## DataTable
+
+Main table component.
+
+### Props
+
+```tsx
+interface DataTableProps<TData> {
+  tableOptions: TableOptions<TData>;
+  className?: string;
+  TableComponent?: React.ElementType;
+  TableHeaderComponent?: React.ElementType;
+  TableRowComponent?: React.ElementType;
+  TableCellComponent?: React.ElementType;
+  TableHeadComponent?: React.ElementType;
+  TableBodyComponent?: React.ElementType;
+  TableFooterComponent?: React.ElementType;
+}
+```
+
+## TableOptions
+
+Main configuration object for the table.
+
+```tsx
+interface TableOptions<T> {
+  data: T[];
+  columns: ColumnDef<T>[];
+  globalFilter?: GlobalFilterType;
+  filterRowClassName?: string;
+  rowClassName?: string;
+  colClassName?: string;
+  filter?: boolean;
+  reorderable?: boolean;
+  showFilterButton?: boolean;
+  pagination?: PaginationOptions;
+  enableColumnResizing?: boolean;
+  columnResizeMode?: "onChange" | "onEnd";
+  columnResizeDirection?: "ltr" | "rtl";
+  translations?: TableTranslations;
+  // ... and more
+}
+```
+
+## ColumnDef
+
+Column definition type.
+
+```tsx
+interface ColumnDef<T> {
+  accessorKey?: DeepKeys<T>;
+  accessorFn?: (row: T) => any;
+  id?: string;
+  header?: string | ((info: HeaderContext<T>) => React.ReactNode);
+  cell?: (info: CellContext<T>) => React.ReactNode;
+  filter?: FilterType<T>;
+  sortField?: string;
+  className?: string;
+  headerClassName?: string;
+  footerClassName?: string;
+  reorderable?: boolean;
+  size?: number;
+  minSize?: number;
+  maxSize?: number;
+  enableResizing?: boolean;
+  // ... TanStack Table column options
+}
+```
+
+## PaginationOptions
+
+Pagination configuration.
+
+```tsx
+interface PaginationOptions {
+  pageSizeOptions?: number[];
+  pageSize: number;
+  totalRecords: number;
+  mode?: "advanced" | "default" | "compact";
+  maxVisiblePages?: number;
+  goToPageLabel?: string;
+  pageSizeLabel?: string;
+  className?: string;
+  totalLabel?: string;
+  layout?: ("total" | "pageSize" | "goto" | "buttons")[];
+}
+```
+
+## FilterType
+
+Filter configuration.
+
+```tsx
+type FilterType<T> =
+  | {
+      type: "text";
+      field: string;
+      placeholder: string;
+      showList?: boolean;
+      showTotal?: boolean;
+    }
+  | {
+      type: "range";
+      field: string;
+      minPlaceholder?: string;
+      maxPlaceholder?: string;
+      showLimit?: boolean;
+      minLimit?: number | "faceted";
+      maxLimit?: number | "faceted";
+    }
+  | {
+      type: "select" | "multi-select";
+      field: string;
+      options: any[];
+      optionLabel: string;
+      optionValue: string;
+      allLabel?: string;
+    }
+  | {
+      type: "boolean";
+      field: string;
+      trueLabel?: string;
+      falseLabel?: string;
+      allLabel?: string;
+    }
+  | {
+      type: "custom";
+      field: string;
+      component: React.ComponentType<{ column: Column<T> }>;
+    };
+```
+

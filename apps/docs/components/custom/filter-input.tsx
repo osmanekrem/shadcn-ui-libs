@@ -2,7 +2,7 @@
 
 import React from "react";
 import DebouncedInput from "./debounced-input";
-import { Column, ColumnDef } from "../../types/types";
+import { Column, ColumnDef } from '@/types/types';
 import {
   Select,
   SelectContent,
@@ -10,13 +10,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { cn } from "../../lib/utils";
-import { sanitizeFilterValue, sanitizeSearchInput } from "../../lib/security";
+import { cn } from '@/lib/utils';
+import { sanitizeFilterValue, sanitizeSearchInput } from '@/lib/security';
 import {
   TableTranslations,
   defaultTranslations,
   createTranslator,
-} from "../../lib/i18n";
+} from '@/lib/i18n';
 
 function FilterInput<T>({
   column,

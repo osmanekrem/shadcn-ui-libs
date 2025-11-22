@@ -15,11 +15,11 @@ import {
   SortingFn,
   Header,
 } from "@tanstack/react-table";
-import FilterInput from "../filter-input";
-import { Column, ColumnDef, TableOptions } from "../../../types/types";
-import { cn, getValue } from "../../../lib/utils";
+import FilterInput from '@/components/custom/filter-input';
+import { Column, ColumnDef, TableOptions } from '@/types/types';
+import { cn, getValue } from '@/lib/utils';
 import { RankingInfo } from "@tanstack/match-sorter-utils";
-import DebouncedInput from "../debounced-input";
+import DebouncedInput from '@/components/custom/debounced-input';
 import {
   Table as DefaultTable,
   TableBody,
@@ -28,10 +28,10 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../ui/table";
-import { fuzzyFilter, fuzzySort, useExternalState } from "./actions";
-import ColumnVisibility from "../column-visibility";
-import Pagination, { GoToPage, PageSize } from "../pagination";
+} from '@/components/ui/table';
+import { fuzzyFilter, fuzzySort, useExternalState } from '@/components/custom/datatable/actions';
+import ColumnVisibility from '@/components/custom/column-visibility';
+import Pagination, { GoToPage, PageSize } from '@/components/custom/pagination';
 
 import {
   DndContext,
@@ -52,21 +52,21 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { DraggableHeader, DraggableTableCell } from "../draggable-header";
-import { Checkbox } from "../../ui/checkbox";
+import { DraggableHeader, DraggableTableCell } from '@/components/custom/draggable-header';
+import { Checkbox } from '@/components/ui/checkbox';
 import React from "react";
 import {
   sanitizeSearchInput,
   validatePaginationParams,
   validateSortingParams,
   RateLimiter,
-} from "../../../lib/security";
+} from '@/lib/security';
 import {
   defaultTranslations,
   createTranslator,
   TableTranslations,
-} from "../../../lib/i18n";
-import { Button } from "../../ui/button";
+} from '@/lib/i18n';
+import { Button } from '@/components/ui/button';
 
 type DraggableFilterCellProps<TData> = {
   readonly header: Header<TData, unknown>;

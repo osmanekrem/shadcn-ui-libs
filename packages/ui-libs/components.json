@@ -1,11 +1,11 @@
 {
   "$schema": "https://ui.shadcn.com/schema.json",
   "style": "new-york",
-  "rsc": true,
+  "rsc": false,
   "tsx": true,
   "tailwind": {
-    "config": "",
-    "css": "app/globals.css",
+    "config": "tailwind.config.js",
+    "css": "src/styles/globals.css",
     "baseColor": "neutral",
     "cssVariables": true,
     "prefix": ""
@@ -19,7 +19,6 @@
     "hooks": "@/hooks"
   },
   "registries": {
-    "@aceternity": "https://ui.aceternity.com/registry/{name}.json",
-    "@tanstack-shadcn-table": "../../packages/ui-libs/registry/{name}.json"
+    "@tanstack-shadcn-table": "./registry/{name}.json"
   }
 }
