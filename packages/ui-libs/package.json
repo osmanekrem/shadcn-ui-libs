@@ -1,6 +1,6 @@
 {
   "name": "tanstack-shadcn-table",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A powerful, feature-rich React table component built on top of TanStack Table v8 with shadcn/ui styling. Optimized bundle size with 55% reduction through peer dependencies.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -126,11 +126,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/osmanekrem/tanstack-shadcn-table.git"
+    "url": "https://github.com/osmanekrem/shadecn-ui-libs.git"
   },
-  "homepage": "https://github.com/osmanekrem/tanstack-shadcn-table#readme",
+  "homepage": "https://github.com/osmanekrem/shadecn-ui-libs#readme",
   "bugs": {
-    "url": "https://github.com/osmanekrem/tanstack-shadcn-table/issues"
+    "url": "https://github.com/osmanekrem/shadecn-ui-libs/issues"
   },
   "engines": {
     "node": ">=16.0.0",
