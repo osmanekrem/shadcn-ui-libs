@@ -2,13 +2,13 @@
 
 import React, { Suspense, lazy } from "react";
 import { flexRender, Header } from "@tanstack/react-table";
-import { TableCell, TableHead } from "../../ui/table";
-import { ColumnDef } from "../../../types/types";
+import { TableCell, TableHead } from "../components/ui/table";
+import { ColumnDef } from "../types/types";
 import { ArrowDownUp, MenuIcon, SortAsc, SortDesc } from "lucide-react";
-import { cn } from "../../../lib/utils";
-import { Button } from "../../ui/button";
+import { cn } from "../lib/utils";
+import { Button } from "../components/ui/button";
 import { Cell } from "@tanstack/react-table";
-import ColumnResizeHandle from "../column-resize-handle";
+import ColumnResizeHandle from "./column-resize-handle";
 
 // Lazy load useSortable hook
 const useSortableLazy = lazy(() =>

@@ -30,11 +30,11 @@ import type {
   ColumnDef,
   TableOptions,
   PaginationOptions,
-} from "../../../types/types";
-import type { TableTranslations } from "../../../lib/i18n";
-import { cn, getValue } from "../../../lib/utils";
+} from "../types/types";
+import type { TableTranslations } from "../lib/i18n";
+import { cn, getValue } from "../lib/utils";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
-import DebouncedInput from "../../../ui-elements/debounced-input";
+import DebouncedInput from "../ui-elements/debounced-input";
 import {
   Table as DefaultTable,
   TableBody,
@@ -43,7 +43,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../../ui/table";
+} from "../components/ui/table";
 import { fuzzyFilter, fuzzySort, useExternalState } from "./actions";
 
 // Type definitions for lazy components
@@ -66,19 +66,19 @@ type PaginationContentProps<T> = {
 
 // Lazy load optional features for better code splitting
 const FilterInputLazy = lazy(() =>
-  import("../filter-input.js").then((module) => ({
+  import("./filter-input.js").then((module) => ({
     default: module.default as unknown as ComponentType<FilterInputProps<any>>,
   }))
 );
 const ColumnVisibilityLazy = lazy(() =>
-  import("../column-visibility.js").then((module) => ({
+  import("./column-visibility.js").then((module) => ({
     default: module.default as unknown as ComponentType<ColumnVisibilityProps>,
   }))
 );
 
 // Pagination content component (lazy loaded)
 const PaginationContentLazy = lazy(() =>
-  import("../pagination.js").then((module) => ({
+  import("./pagination.js").then((module) => ({
     default: ({
       table,
       pagination,
@@ -181,17 +181,17 @@ import {
   SensorsCreatorLazy,
   lazyLoadDndUtilities,
 } from "./dnd-wrapper";
-import { Checkbox } from "../../ui/checkbox";
+import { Checkbox } from "../components/ui/checkbox";
 import React from "react";
 // Import only used security utilities for better tree-shaking
-import { sanitizeSearchInput } from "../../../lib/security/sanitize";
+import { sanitizeSearchInput } from "../lib/security/sanitize";
 import {
   validatePaginationParams,
   validateSortingParams,
-} from "../../../lib/security/validation";
-import { RateLimiter } from "../../../lib/security/rate-limiter";
-import { defaultTranslations, createTranslator } from "../../../lib/i18n";
-import { Button } from "../../ui/button";
+} from "../lib/security/validation";
+import { RateLimiter } from "../lib/security/rate-limiter";
+import { defaultTranslations, createTranslator } from "../lib/i18n";
+import { Button } from "../components/ui/button";
 
 type DraggableFilterCellProps<TData> = {
   readonly header: Header<TData, unknown>;

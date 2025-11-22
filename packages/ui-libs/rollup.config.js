@@ -160,6 +160,12 @@ const securityModules = [
   { module: "csp", path: "lib/security/csp" },
 ];
 
+// Hooks module entry points for tree-shaking
+const hooksModules = [
+  { module: "use-debounce", path: "lib/hooks/use-debounce" },
+  { module: "use-rate-limit", path: "lib/hooks/use-rate-limit" },
+];
+
 const localeBuilds = localeConfigs.map(({ lang }) => ({
   input: `src/lib/i18n/locales/${lang}.ts`,
   output: [
@@ -258,6 +264,71 @@ const securityBuilds = securityModules.map(({ module, path }) => ({
         declaration: true,
         declarationMap: false, // Source maps kaldırıldı - paket boyutu optimizasyonu
         declarationDir: "./dist/security",
+      },
+    }),
+    terser({
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: [
+          "console.log",
+          "console.info",
+          "console.debug",
+          "console.warn",
+        ],
+        passes: 2,
+        unsafe: true,
+        unsafe_comps: true,
+        unsafe_Function: true,
+        unsafe_math: true,
+        unsafe_proto: true,
+        unsafe_regexp: true,
+        unsafe_undefined: true,
+      },
+      mangle: {
+        properties: {
+          regex: /^_/,
+        },
+      },
+    }),
+  ],
+  external: sharedExternal,
+  treeshake: sharedTreeshake,
+}));
+
+const hooksBuilds = hooksModules.map(({ module, path }) => ({
+  input: `src/${path}.ts`,
+  output: [
+    {
+      file: `dist/lib/hooks/${module}.js`,
+      format: "cjs",
+      exports: "named",
+      sourcemap: false,
+    },
+    {
+      file: `dist/lib/hooks/${module}.esm.js`,
+      format: "esm",
+      exports: "named",
+      sourcemap: false,
+    },
+  ],
+  plugins: [
+    peerDepsExternal(),
+    resolve({
+      browser: true,
+      preferBuiltins: true,
+    }),
+    commonjs({
+      include: /node_modules/,
+      transformMixedEsModules: true,
+    }),
+    typescript({
+      tsconfig: "./tsconfig.json",
+      exclude: ["**/*.stories.*", "**/*.test.*"],
+      compilerOptions: {
+        declaration: true,
+        declarationMap: false,
+        declarationDir: "./dist/lib/hooks",
       },
     }),
     terser({
@@ -413,8 +484,61 @@ export default [
     external: sharedExternal,
     treeshake: sharedTreeshake,
   },
+  // UI elements entry point - CJS format (optimized)
+  {
+    input: "src/ui-elements/index.ts",
+    output: {
+      file: "dist/ui-elements.js",
+      format: "cjs",
+      exports: "named",
+      sourcemap: false,
+      inlineDynamicImports: true, // Inline for CJS
+      compact: true, // Remove whitespace
+      generatedCode: {
+        constBindings: true, // Use const instead of var
+      },
+    },
+    plugins: [
+      ...sharedPlugins,
+      visualizer({
+        filename: "bundle-analysis-ui-elements.html",
+        open: process.env.NODE_ENV !== "production",
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    ],
+    external: sharedExternal,
+    treeshake: sharedTreeshake,
+  },
+  // UI elements entry point - ESM format with code splitting
+  {
+    input: "src/ui-elements/index.ts",
+    output: {
+      dir: "dist",
+      format: "esm",
+      exports: "named",
+      sourcemap: false,
+      entryFileNames: "ui-elements.esm.js",
+      inlineDynamicImports: false, // Enable code splitting for ESM
+      manualChunks: createManualChunks,
+      chunkFileNames: "chunks/[name]-[hash].js",
+    },
+    plugins: [
+      ...sharedPlugins,
+      visualizer({
+        filename: "bundle-analysis-ui-elements-esm.html",
+        open: process.env.NODE_ENV !== "production",
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    ],
+    external: sharedExternal,
+    treeshake: sharedTreeshake,
+  },
   // Locale entry points (tree-shakeable)
   ...localeBuilds,
   // Security module entry points (tree-shakeable)
   ...securityBuilds,
+  // Hooks module entry points (tree-shakeable)
+  ...hooksBuilds,
 ];

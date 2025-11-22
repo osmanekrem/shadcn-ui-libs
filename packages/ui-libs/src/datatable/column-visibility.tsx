@@ -6,8 +6,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
   DropdownMenuCheckboxItem,
-} from "../ui/dropdown-menu";
-import { Button } from "../ui/button";
+} from "../components/ui/dropdown-menu";
+import { Button } from "../components/ui/button";
 
 export default function ColumnVisibility({
   table,
@@ -56,3 +56,4 @@ export default function ColumnVisibility({
     </DropdownMenu>
   );
 }
+

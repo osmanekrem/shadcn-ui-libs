@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { RowActions } from "../../src/table-elements/row-actions";
 import { Edit, Trash2, Eye, Copy, Download, Share2 } from "lucide-react";
 import { useReactTable, getCoreRowModel } from "@tanstack/react-table";
-import { DataTable } from "../../src/components/custom/datatable";
+import { DataTable } from "../../src/datatable";
 import { ColumnDef } from "../../src/types/types";
 import React from "react";
 

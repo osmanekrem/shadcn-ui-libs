@@ -1,15 +1,11 @@
 // Main Components - Core functionality
-export {
-  DataTable,
-  fuzzyFilter,
-  fuzzySort,
-} from "./components/custom/datatable";
+export { DataTable, fuzzyFilter, fuzzySort } from "./datatable";
 
 // Utility Components - Optional features
 export { default as DebouncedInput } from "./ui-elements/debounced-input";
 export { default as MultiSelect } from "./ui-elements/multi-select";
-export { default as FilterInput } from "./components/custom/filter-input";
-export { default as ColumnResizeHandle } from "./components/custom/column-resize-handle";
+export { default as FilterInput } from "./datatable/filter-input";
+export { default as ColumnResizeHandle } from "./datatable/column-resize-handle";
 
 // Security Utilities - Optional security features
 // For tree-shaking, import directly from sub-modules:
@@ -62,3 +58,8 @@ export type {
 
 // Utils
 export { getValue } from "./lib/utils";
+
+// Hooks - Tree-shakeable
+// For tree-shaking, import directly from sub-modules:
+// import { useDebounce } from "tanstack-shadcn-table/lib/hooks/use-debounce";
+export { useDebounce, useRateLimit } from "./lib/hooks";

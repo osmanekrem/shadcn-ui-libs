@@ -110,7 +110,7 @@ function transformImports(content, filePath) {
     // Handle ./actions, ./index imports within same directory
     content = content.replace(/from\s+['"]\.\/([^'"]+)['"]/g, (match, p1) => {
       if (filePath.includes("datatable/")) {
-        return `from '@/components/custom/datatable/${p1}'`;
+        return `from '@/datatable/${p1}'`;
       }
       return match;
     });

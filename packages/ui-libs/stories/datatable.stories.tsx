@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import React, { useState } from "react";
-import { DataTable } from "../src/components/custom/datatable";
+import { DataTable } from "../src/datatable";
 import { ColumnDef, LazyLoadEvent, TableOptions } from "../src/types/types";
 import {
   availableLanguages,

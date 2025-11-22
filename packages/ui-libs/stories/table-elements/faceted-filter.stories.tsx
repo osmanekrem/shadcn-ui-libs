@@ -7,7 +7,7 @@ import {
   getFacetedRowModel,
   getFacetedUniqueValues,
 } from "@tanstack/react-table";
-import { DataTable } from "../../src/components/custom/datatable";
+import { DataTable } from "../../src/datatable";
 import { ColumnDef } from "../../src/types/types";
 import React, { useMemo } from "react";
 import {
@@ -22,7 +22,7 @@ import { CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
 import {
   fuzzyFilter,
   fuzzySort,
-} from "../../src/components/custom/datatable/actions";
+} from "../../src/datatable/actions";
 
 type Product = {
   id: number;

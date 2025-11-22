@@ -1,23 +1,23 @@
 "use client";
 
 import React from "react";
-import DebouncedInput from "../../ui-elements/debounced-input";
-import { Column, ColumnDef } from "../../types/types";
+import DebouncedInput from "../ui-elements/debounced-input";
+import { Column, ColumnDef } from "../types/types";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { cn } from "../../lib/utils";
+} from "../components/ui/select";
+import { cn } from "../lib/utils";
 // Tree-shakeable imports - only imports what's needed
-import { sanitizeFilterValue, sanitizeSearchInput } from "../../lib/security/sanitize";
+import { sanitizeFilterValue, sanitizeSearchInput } from "../lib/security/sanitize";
 import {
   TableTranslations,
   defaultTranslations,
   createTranslator,
-} from "../../lib/i18n";
+} from "../lib/i18n";
 
 function FilterInput<T>({
   column,
@@ -274,3 +274,4 @@ function FilterInput<T>({
 }
 
 export default FilterInput;
+

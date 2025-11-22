@@ -18,6 +18,11 @@
       "require": "./dist/table-elements.js",
       "types": "./dist/table-elements.d.ts"
     },
+    "./ui-elements": {
+      "import": "./dist/ui-elements.esm.js",
+      "require": "./dist/ui-elements.js",
+      "types": "./dist/ui-elements.d.ts"
+    },
     "./table": {
       "import": "./dist/index.esm.js",
       "require": "./dist/index.js",
@@ -69,6 +74,16 @@
       "import": "./dist/security/csp.esm.js",
       "require": "./dist/security/csp.js",
       "types": "./dist/security/csp.d.ts"
+    },
+    "./lib/hooks/use-debounce": {
+      "import": "./dist/lib/hooks/use-debounce.esm.js",
+      "require": "./dist/lib/hooks/use-debounce.js",
+      "types": "./dist/lib/hooks/use-debounce.d.ts"
+    },
+    "./lib/hooks/use-rate-limit": {
+      "import": "./dist/lib/hooks/use-rate-limit.esm.js",
+      "require": "./dist/lib/hooks/use-rate-limit.js",
+      "types": "./dist/lib/hooks/use-rate-limit.d.ts"
     }
   },
   "files": [

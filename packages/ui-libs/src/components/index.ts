@@ -1,11 +1,11 @@
 // Core DataTable
-export { DataTable, fuzzyFilter, fuzzySort } from "./custom/datatable";
+export { DataTable, fuzzyFilter, fuzzySort } from "../datatable";
 
 // Utility Components
 export { default as DebouncedInput } from "../ui-elements/debounced-input";
 export { default as MultiSelect } from "../ui-elements/multi-select";
-export { default as FilterInput } from "./custom/filter-input";
-export { default as ColumnResizeHandle } from "./custom/column-resize-handle";
+export { default as FilterInput } from "../datatable/filter-input";
+export { default as ColumnResizeHandle } from "../datatable/column-resize-handle";
 
 // UI Components
 export { Badge, badgeVariants } from "./ui/badge";
