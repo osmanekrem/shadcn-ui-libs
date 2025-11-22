@@ -34,7 +34,7 @@ import type {
 import type { TableTranslations } from "../../../lib/i18n";
 import { cn, getValue } from "../../../lib/utils";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
-import DebouncedInput from "../debounced-input";
+import DebouncedInput from "../../../ui-elements/debounced-input";
 import {
   Table as DefaultTable,
   TableBody,
@@ -839,7 +839,7 @@ export function DataTable<TData>({
 
   // Store sensors state - will be set by SensorsCreator component
   const [sensors, setSensors] = React.useState<any[]>([]);
-  
+
   // Memoize the callback to avoid recreating it on every render
   const handleSensorsReady = useCallback((newSensors: any[]) => {
     setSensors(newSensors);

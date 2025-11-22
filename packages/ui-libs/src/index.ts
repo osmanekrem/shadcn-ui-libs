@@ -6,7 +6,8 @@ export {
 } from "./components/custom/datatable";
 
 // Utility Components - Optional features
-export { default as DebouncedInput } from "./components/custom/debounced-input";
+export { default as DebouncedInput } from "./ui-elements/debounced-input";
+export { default as MultiSelect } from "./ui-elements/multi-select";
 export { default as FilterInput } from "./components/custom/filter-input";
 export { default as ColumnResizeHandle } from "./components/custom/column-resize-handle";
 

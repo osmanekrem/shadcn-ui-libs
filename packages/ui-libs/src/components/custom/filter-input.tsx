@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import DebouncedInput from "./debounced-input";
+import DebouncedInput from "../../ui-elements/debounced-input";
 import { Column, ColumnDef } from "../../types/types";
 import {
   Select,

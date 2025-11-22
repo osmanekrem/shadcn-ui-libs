@@ -11,7 +11,7 @@ import {
   Ellipsis,
 } from "lucide-react";
 import { PaginationOptions } from "../../types/types";
-import DebouncedInput from "./debounced-input";
+import DebouncedInput from "../../ui-elements/debounced-input";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
 import {
   TableTranslations,

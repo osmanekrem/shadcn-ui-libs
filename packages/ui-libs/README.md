@@ -76,19 +76,45 @@ import "tanstack-shadcn-table/dist/styles.css";
 
 ### 📊 Bundle Size
 
-- **Main Bundle**: ~14.2KB (gzipped) - `index.esm.js`
-- **CSS**: 7.4KB (gzipped) - `styles.css`
-- **Total Production Bundle**: ~21.6KB (gzipped)
-- **With Dependencies**: ~150KB (when peer dependencies are shared)
-- **Optimization**: 55% smaller than traditional bundling approach
+**ESM Format (Recommended - with code splitting):**
+
+- **Main Bundle**: ~4.5KB (gzipped) - `index.esm.js` (core functionality)
+- **Feature Chunks** (lazy-loaded, only loaded when used):
+  - Filtering: ~1.7KB (gzipped)
+  - Pagination: ~1.3KB (gzipped)
+  - Drag & Drop: ~1.8KB (gzipped)
+  - Column Resizing: ~0.5KB (gzipped)
+  - Row Selection: ~0.4KB (gzipped)
+  - UI Components: ~2.3KB (gzipped)
+  - Utils: ~1.1-3.8KB (gzipped)
+- **CSS**: 8.0KB (gzipped) - `styles.css`
+- **Total (minimal usage)**: ~12.5KB (gzipped) - Main bundle + CSS
+
+**CJS Format (legacy support):**
+
+- **Main Bundle**: ~14.5KB (gzipped) - `index.js` (all features inline)
+- **CSS**: 8.0KB (gzipped) - `styles.css`
+- **Total**: ~22.5KB (gzipped)
+
+**Table Elements** (optional addons): ~4.1KB (gzipped) - `table-elements.esm.js`
+
+**With Dependencies**: ~150KB (when peer dependencies are shared)
+**Optimization**: 55% smaller than traditional bundling approach + code splitting for ESM
 
 **i18n Bundle Sizes (tree-shakeable):**
 
-- English: 0.8KB (gzipped)
-- Turkish: 1.0KB (gzipped)
+- English: 0.9KB (gzipped)
+- Turkish: 1.1KB (gzipped)
 - Spanish: 1.0KB (gzipped)
-- French: 1.0KB (gzipped)
+- French: 1.1KB (gzipped)
 - German: 1.0KB (gzipped)
+
+**Security Modules (tree-shakeable):**
+
+- sanitize: 0.6KB (gzipped)
+- validation: 0.5KB (gzipped)
+- rate-limiter: 0.3KB (gzipped)
+- csp: 0.2KB (gzipped)
 
 **💡 Tip:** Use tree-shakeable imports to reduce bundle size. Only the imported language/utility will be included in your bundle.
 

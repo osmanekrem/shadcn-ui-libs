@@ -68,6 +68,16 @@ function transformImports(content, filePath) {
     "from '@/components/ui/$1'"
   );
 
+  // Transform ui-elements imports
+  content = content.replace(
+    /from\s+['"]\.\.\/\.\.\/ui-elements\/([^'"]+)['"]/g,
+    "from '@/ui-elements/$1'"
+  );
+  content = content.replace(
+    /from\s+['"]\.\.\/\.\.\/\.\.\/ui-elements\/([^'"]+)['"]/g,
+    "from '@/ui-elements/$1'"
+  );
+
   // Transform custom component imports (same directory or parent)
   // Handle ../filter-input, ../debounced-input, etc.
   if (filePath.includes("custom/")) {
@@ -80,14 +90,19 @@ function transformImports(content, filePath) {
       // Check if it's a custom component
       if (
         p1.includes("filter-input") ||
-        p1.includes("debounced-input") ||
         p1.includes("column-visibility") ||
         p1.includes("pagination") ||
         p1.includes("draggable-header") ||
-        p1.includes("column-resize-handle") ||
-        p1.includes("multi-select")
+        p1.includes("column-resize-handle")
       ) {
         return `from '@/components/custom/${p1}'`;
+      }
+      // Check if it's a ui-element (debounced-input, multi-select)
+      if (
+        p1.includes("debounced-input") ||
+        p1.includes("multi-select")
+      ) {
+        return `from '@/ui-elements/${p1}'`;
       }
       return match;
     });

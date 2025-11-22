@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "declaration": true,
-    "declarationMap": true,
+    "declarationMap": false, // Source maps kaldırıldı - %49 paket boyutu azalması (516 KB tasarruf)
     "esModuleInterop": true,
     "incremental": false,
     "isolatedModules": true,

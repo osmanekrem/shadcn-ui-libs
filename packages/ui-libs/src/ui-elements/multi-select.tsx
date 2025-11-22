@@ -1,12 +1,12 @@
 "use client";
 
-import { Button } from "../ui/button";
+import { Button } from "../components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "../ui/dropdown-menu";
+} from "../components/ui/dropdown-menu";
 import { ChevronDown } from "lucide-react";
 import { Dispatch, SetStateAction } from "react";
 
@@ -74,3 +74,4 @@ const MultiSelect = ({
 };
 
 export default MultiSelect;
+

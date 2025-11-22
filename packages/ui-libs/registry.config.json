@@ -34,8 +34,8 @@
           "type": "components:component"
         },
         {
-          "src": "src/components/custom/debounced-input.tsx",
-          "dest": "components/custom/debounced-input.tsx",
+          "src": "src/ui-elements/debounced-input.tsx",
+          "dest": "ui-elements/debounced-input.tsx",
           "type": "components:component"
         },
         {
@@ -108,8 +108,8 @@
       "dependencies": ["lucide-react"],
       "files": [
         {
-          "src": "src/components/custom/multi-select.tsx",
-          "dest": "components/custom/multi-select.tsx",
+          "src": "src/ui-elements/multi-select.tsx",
+          "dest": "ui-elements/multi-select.tsx",
           "type": "components:component"
         }
       ]

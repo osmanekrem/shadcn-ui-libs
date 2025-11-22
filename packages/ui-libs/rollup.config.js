@@ -16,14 +16,15 @@ const sharedPlugins = [
     include: /node_modules/,
     transformMixedEsModules: true,
   }),
-  typescript({
-    tsconfig: "./tsconfig.json",
-    exclude: ["**/*.stories.*", "**/*.test.*"],
-    compilerOptions: {
-      declaration: true,
-      declarationDir: "./dist",
-    },
-  }),
+    typescript({
+      tsconfig: "./tsconfig.json",
+      exclude: ["**/*.stories.*", "**/*.test.*"],
+      compilerOptions: {
+        declaration: true,
+        declarationMap: false, // Source maps kaldırıldı - paket boyutu optimizasyonu
+        declarationDir: "./dist",
+      },
+    }),
   terser({
     compress: {
       drop_console: true,
@@ -33,8 +34,10 @@ const sharedPlugins = [
         "console.info",
         "console.debug",
         "console.warn",
+        "console.error",
+        "console.trace",
       ],
-      passes: 2,
+      passes: 3, // CJS için daha fazla pass (2 → 3)
       unsafe: true,
       unsafe_comps: true,
       unsafe_Function: true,
@@ -42,11 +45,24 @@ const sharedPlugins = [
       unsafe_proto: true,
       unsafe_regexp: true,
       unsafe_undefined: true,
+      dead_code: true, // Dead code elimination
+      unused: true, // Unused code removal
+      collapse_vars: true, // Variable collapsing
+      reduce_vars: true, // Variable reduction
+      inline: 2, // More aggressive inlining
+      keep_fargs: false, // Remove unused function arguments
+      keep_infinity: false, // Optimize Infinity
+      side_effects: false, // Assume no side effects for better optimization
     },
     mangle: {
       properties: {
         regex: /^_/,
       },
+      toplevel: true, // Mangle top-level names (CJS için güvenli)
+    },
+    format: {
+      comments: false, // Remove all comments
+      ascii_only: false, // Allow unicode (smaller size)
     },
   }),
 ];
@@ -70,7 +86,62 @@ const sharedTreeshake = {
   moduleSideEffects: false,
   propertyReadSideEffects: false,
   unknownGlobalSideEffects: false,
+  // CJS için daha agresif tree-shaking
+  tryCatchDeoptimization: false, // Try-catch optimizasyonu
+  manualPureFunctions: [
+    "Object.freeze",
+    "Object.defineProperty",
+    "Object.defineProperties",
+  ],
 };
+
+// Feature-based code splitting function for ESM
+function createManualChunks(id) {
+  // Filtering features
+  if (id.includes("filter-input") || id.includes("fuzzyFilter") || id.includes("fuzzy-filter")) {
+    return "filtering";
+  }
+  
+  // Sorting features
+  if (id.includes("fuzzySort") || id.includes("fuzzy-sort") || id.includes("sorting")) {
+    return "sorting";
+  }
+  
+  // Pagination features
+  if (id.includes("pagination")) {
+    return "pagination";
+  }
+  
+  // Column resizing features
+  if (id.includes("column-resize") || id.includes("columnResize")) {
+    return "column-resizing";
+  }
+  
+  // Row selection features
+  if (id.includes("checkbox") && id.includes("components")) {
+    return "row-selection";
+  }
+  
+  // Drag and drop features
+  if (id.includes("dnd") || id.includes("draggable") || id.includes("sortable") || id.includes("@dnd-kit")) {
+    return "drag-drop";
+  }
+  
+  // UI components (shared)
+  if (id.includes("components/ui/")) {
+    return "ui-components";
+  }
+  
+  // Utilities
+  if (id.includes("lib/utils") || id.includes("lib/i18n")) {
+    return "utils";
+  }
+  
+  // Security utilities
+  if (id.includes("lib/security")) {
+    return "security";
+  }
+}
 
 // Locale entry points for tree-shaking
 const localeConfigs = [
@@ -185,6 +256,7 @@ const securityBuilds = securityModules.map(({ module, path }) => ({
       exclude: ["**/*.stories.*", "**/*.test.*"],
       compilerOptions: {
         declaration: true,
+        declarationMap: false, // Source maps kaldırıldı - paket boyutu optimizasyonu
         declarationDir: "./dist/security",
       },
     }),
@@ -219,25 +291,20 @@ const securityBuilds = securityModules.map(({ module, path }) => ({
 }));
 
 export default [
-  // Main entry point (table)
+  // Main entry point (table) - CJS format (no code splitting, but optimized)
   {
     input: "src/index.ts",
-    output: [
-      {
-        file: "dist/index.js",
-        format: "cjs",
-        exports: "named",
-        sourcemap: false,
-        inlineDynamicImports: true, // Inline dynamic imports for CJS
+    output: {
+      file: "dist/index.js",
+      format: "cjs",
+      exports: "named",
+      sourcemap: false,
+      inlineDynamicImports: true, // Inline dynamic imports for CJS (code splitting not supported)
+      compact: true, // Remove whitespace
+      generatedCode: {
+        constBindings: true, // Use const instead of var for better minification
       },
-      {
-        file: "dist/index.esm.js",
-        format: "esm",
-        exports: "named",
-        sourcemap: false,
-        inlineDynamicImports: true, // Inline dynamic imports for ESM
-      },
-    ],
+    },
     plugins: [
       ...sharedPlugins,
       postcss({
@@ -252,7 +319,7 @@ export default [
       }),
       visualizer({
         filename: "bundle-analysis-table.html",
-        open: process.env.NODE_ENV !== "production", // Only open in dev mode
+        open: process.env.NODE_ENV !== "production",
         gzipSize: true,
         brotliSize: true,
       }),
@@ -260,28 +327,85 @@ export default [
     external: sharedExternal,
     treeshake: sharedTreeshake,
   },
-  // Table elements entry point (addons)
+  // Main entry point (table) - ESM format with code splitting
+  {
+    input: "src/index.ts",
+    output: {
+      dir: "dist",
+      format: "esm",
+      exports: "named",
+      sourcemap: false,
+      entryFileNames: "index.esm.js",
+      inlineDynamicImports: false, // Enable code splitting for ESM
+      manualChunks: createManualChunks,
+      chunkFileNames: "chunks/[name]-[hash].js", // Output chunks to separate files
+    },
+    plugins: [
+      ...sharedPlugins,
+      postcss({
+        config: {
+          path: "./postcss.config.mjs",
+        },
+        extensions: [".css"],
+        minimize: true,
+        inject: {
+          insertAt: "top",
+        },
+      }),
+      visualizer({
+        filename: "bundle-analysis-table-esm.html",
+        open: process.env.NODE_ENV !== "production",
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    ],
+    external: sharedExternal,
+    treeshake: sharedTreeshake,
+  },
+  // Table elements entry point (addons) - CJS format (optimized)
   {
     input: "src/table-elements/index.ts",
-    output: [
-      {
-        file: "dist/table-elements.js",
-        format: "cjs",
-        exports: "named",
-        sourcemap: false,
+    output: {
+      file: "dist/table-elements.js",
+      format: "cjs",
+      exports: "named",
+      sourcemap: false,
+      inlineDynamicImports: true, // Inline for CJS
+      compact: true, // Remove whitespace
+      generatedCode: {
+        constBindings: true, // Use const instead of var
       },
-      {
-        file: "dist/table-elements.esm.js",
-        format: "esm",
-        exports: "named",
-        sourcemap: false,
-      },
-    ],
+    },
     plugins: [
       ...sharedPlugins,
       visualizer({
         filename: "bundle-analysis-table-elements.html",
-        open: process.env.NODE_ENV !== "production", // Only open in dev mode
+        open: process.env.NODE_ENV !== "production",
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    ],
+    external: sharedExternal,
+    treeshake: sharedTreeshake,
+  },
+  // Table elements entry point (addons) - ESM format with code splitting
+  {
+    input: "src/table-elements/index.ts",
+    output: {
+      dir: "dist",
+      format: "esm",
+      exports: "named",
+      sourcemap: false,
+      entryFileNames: "table-elements.esm.js",
+      inlineDynamicImports: false, // Enable code splitting for ESM
+      manualChunks: createManualChunks,
+      chunkFileNames: "chunks/[name]-[hash].js",
+    },
+    plugins: [
+      ...sharedPlugins,
+      visualizer({
+        filename: "bundle-analysis-table-elements-esm.html",
+        open: process.env.NODE_ENV !== "production",
         gzipSize: true,
         brotliSize: true,
       }),

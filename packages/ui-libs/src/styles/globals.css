@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
-/* Ensure Tailwind scans library source files when building CSS
-   so utilities used in TS/TSX (e.g., h-9) are included in the output. */
-@source "../**/*.{ts,tsx}";
+/* Optimized: Only scan component source files to reduce CSS bundle size
+   This ensures utilities used in TS/TSX (e.g., h-9) are included while
+   excluding test files, stories, and other non-production code. */
+@source "../components/**/*.{ts,tsx}";
+@source "../table-elements/**/*.{ts,tsx}";
 
 @theme {
   --color-primary: hsl(var(--primary));
@@ -53,20 +55,17 @@
     position: relative;
   }
 
-  /* Ensure columns fill the entire table width */
-  .opal-datatable table {
+  /* Optimized: Removed redundant .opal-datatable rules - using standard table selectors */
+
+  /* Table-specific optimizations */
+  table {
     min-width: 100%;
   }
 
-  .opal-datatable th,
-  .opal-datatable td {
+  th,
+  td {
     word-wrap: break-word;
     overflow-wrap: break-word;
-  }
-
-  /* Ensure table rows fill full width */
-  .opal-datatable tr {
-    width: 100%;
   }
 
   :root {
