@@ -57,14 +57,26 @@ This library ships its own compiled CSS so Tailwind utilities used internally (e
 Import the CSS once in your app entry:
 
 ```ts
-import 'tanstack-shadcn-table/dist/styles.css';
+import "tanstack-shadcn-table/dist/styles.css";
 ```
 
 ### 📊 Bundle Size
 
-- **Library Size**: ~96KB (gzipped)
+- **Main Bundle**: ~14.2KB (gzipped) - `index.esm.js`
+- **CSS**: 7.4KB (gzipped) - `styles.css`
+- **Total Production Bundle**: ~21.6KB (gzipped)
 - **With Dependencies**: ~150KB (when peer dependencies are shared)
 - **Optimization**: 55% smaller than traditional bundling approach
+
+**i18n Bundle Sizes (tree-shakeable):**
+
+- English: 0.8KB (gzipped)
+- Turkish: 1.0KB (gzipped)
+- Spanish: 1.0KB (gzipped)
+- French: 1.0KB (gzipped)
+- German: 1.0KB (gzipped)
+
+**💡 Tip:** Use tree-shakeable imports to reduce bundle size. Only the imported language/utility will be included in your bundle.
 
 ### Peer Dependencies
 
@@ -75,6 +87,7 @@ npm install @radix-ui/react-checkbox @radix-ui/react-dropdown-menu @radix-ui/rea
 ```
 
 **Why Peer Dependencies?**
+
 - **Bundle Size Optimization**: Reduces final bundle size by ~55%
 - **Version Flexibility**: Allows you to use your preferred versions
 - **Tree Shaking**: Better optimization when dependencies are external
@@ -694,7 +707,9 @@ const [columnSizing, setColumnSizing] = useState<ColumnSizingState>({});
 
 ## 🔒 Security
 
-The library includes comprehensive security measures to protect against common web vulnerabilities:
+The library includes comprehensive security measures to protect against common web vulnerabilities.
+
+**💡 Tip:** For better tree-shaking and smaller bundle sizes, import security utilities directly from sub-modules (e.g., `tanstack-shadcn-table/security/sanitize`). See examples below.
 
 ### Built-in Security Features
 
@@ -703,6 +718,13 @@ The library includes comprehensive security measures to protect against common w
 All user inputs are automatically sanitized to prevent Cross-Site Scripting attacks:
 
 ```tsx
+// ✅ Tree-shakeable imports (recommended)
+import {
+  sanitizeHtml,
+  sanitizeSearchInput,
+} from "tanstack-shadcn-table/security/sanitize";
+
+// ⚠️ Alternative (imports all security utilities)
 import { sanitizeHtml, sanitizeSearchInput } from "tanstack-shadcn-table";
 
 // Automatic sanitization in all filter inputs
@@ -722,6 +744,10 @@ import { sanitizeHtml, sanitizeSearchInput } from "tanstack-shadcn-table";
 Built-in rate limiting prevents abuse and DoS attacks:
 
 ```tsx
+// ✅ Tree-shakeable import (recommended)
+import { RateLimiter } from "tanstack-shadcn-table/security/rate-limiter";
+
+// ⚠️ Alternative (imports all security utilities)
 import { RateLimiter } from "tanstack-shadcn-table";
 
 // Custom rate limiter for API calls
@@ -757,11 +783,28 @@ const columns = [
 
 ### Security Utilities
 
+**💡 Tip:** For better tree-shaking, import security utilities directly from sub-modules:
+
+```tsx
+// ✅ Tree-shakeable - only imports sanitizeSearchInput
+import { sanitizeSearchInput } from "tanstack-shadcn-table/security/sanitize";
+
+// ✅ Tree-shakeable - only imports validation functions
+import { validatePaginationParams } from "tanstack-shadcn-table/security/validation";
+
+// ⚠️ Imports all security utilities (not tree-shakeable)
+import { sanitizeSearchInput } from "tanstack-shadcn-table";
+```
+
 #### **sanitizeHtml(input: string)**
 
 Removes dangerous HTML content:
 
 ```tsx
+// ✅ Tree-shakeable import (recommended)
+import { sanitizeHtml } from "tanstack-shadcn-table/security/sanitize";
+
+// ⚠️ Alternative (imports all security utilities)
 import { sanitizeHtml } from "tanstack-shadcn-table";
 
 const safeContent = sanitizeHtml('<script>alert("xss")</script>Hello');
@@ -773,6 +816,10 @@ const safeContent = sanitizeHtml('<script>alert("xss")</script>Hello');
 Sanitizes search and filter inputs:
 
 ```tsx
+// ✅ Tree-shakeable import (recommended)
+import { sanitizeSearchInput } from "tanstack-shadcn-table/security/sanitize";
+
+// ⚠️ Alternative (imports all security utilities)
 import { sanitizeSearchInput } from "tanstack-shadcn-table";
 
 const safeSearch = sanitizeSearchInput('user"; DROP TABLE users; --');
@@ -784,6 +831,10 @@ const safeSearch = sanitizeSearchInput('user"; DROP TABLE users; --');
 Validates pagination to prevent abuse:
 
 ```tsx
+// ✅ Tree-shakeable import (recommended)
+import { validatePaginationParams } from "tanstack-shadcn-table/security/validation";
+
+// ⚠️ Alternative (imports all security utilities)
 import { validatePaginationParams } from "tanstack-shadcn-table";
 
 const { pageIndex, pageSize } = validatePaginationParams(-1, 999999);
@@ -795,6 +846,10 @@ const { pageIndex, pageSize } = validatePaginationParams(-1, 999999);
 Validates file uploads in custom cells:
 
 ```tsx
+// ✅ Tree-shakeable import (recommended)
+import { validateFileUpload } from "tanstack-shadcn-table/security/validation";
+
+// ⚠️ Alternative (imports all security utilities)
 import { validateFileUpload } from "tanstack-shadcn-table";
 
 const CustomFileCell = ({ value }) => {
@@ -814,6 +869,10 @@ const CustomFileCell = ({ value }) => {
 Use the provided CSP directives for additional security:
 
 ```tsx
+// ✅ Tree-shakeable import (recommended)
+import { CSP_DIRECTIVES } from "tanstack-shadcn-table/security/csp";
+
+// ⚠️ Alternative (imports all security utilities)
 import { CSP_DIRECTIVES } from "tanstack-shadcn-table";
 
 // In your HTML head or server configuration
@@ -831,6 +890,9 @@ const cspHeader = Object.entries(CSP_DIRECTIVES)
 Always validate data on the server:
 
 ```tsx
+// ✅ Tree-shakeable import (recommended)
+import { sanitizeSearchInput } from "tanstack-shadcn-table/security/sanitize";
+
 // Client-side (additional layer)
 const handleLazyLoad = (event) => {
   // Client-side sanitization
@@ -856,6 +918,9 @@ app.post("/api/data", (req, res) => {
 Implement security in custom components:
 
 ```tsx
+// ✅ Tree-shakeable import (recommended)
+import { sanitizeHtml } from "tanstack-shadcn-table/security/sanitize";
+
 const SecureCustomCell = ({ value }) => {
   // Sanitize any user-provided content
   const safeValue = sanitizeHtml(String(value));
@@ -964,6 +1029,8 @@ The library includes comprehensive internationalization support with built-in tr
 
 ### Basic Usage
 
+#### Option 1: Import from main package (all languages included)
+
 ```tsx
 import { DataTable, turkishTranslations } from "tanstack-shadcn-table";
 
@@ -976,7 +1043,39 @@ import { DataTable, turkishTranslations } from "tanstack-shadcn-table";
 />;
 ```
 
+#### Option 2: Tree-shakeable imports (recommended for smaller bundles)
+
+```tsx
+// ✅ Only imports English - tree-shakeable
+import { DataTable } from "tanstack-shadcn-table";
+import { defaultTranslations } from "tanstack-shadcn-table/i18n/en";
+
+// ✅ Only imports Turkish - tree-shakeable
+import { turkishTranslations } from "tanstack-shadcn-table/i18n/tr";
+
+<DataTable
+  tableOptions={{
+    data,
+    columns,
+    translations: turkishTranslations, // Only Turkish is bundled
+  }}
+/>;
+```
+
 ### Available Translation Objects
+
+#### Tree-shakeable imports (recommended)
+
+```tsx
+// Import only the language you need - short and clean paths
+import { defaultTranslations } from "tanstack-shadcn-table/i18n/en";
+import { turkishTranslations } from "tanstack-shadcn-table/i18n/tr";
+import { spanishTranslations } from "tanstack-shadcn-table/i18n/es";
+import { frenchTranslations } from "tanstack-shadcn-table/i18n/fr";
+import { germanTranslations } from "tanstack-shadcn-table/i18n/de";
+```
+
+#### All languages (not tree-shakeable)
 
 ```tsx
 import {
@@ -988,6 +1087,8 @@ import {
   availableLanguages, // All languages object
 } from "tanstack-shadcn-table";
 ```
+
+**💡 Tip:** Use tree-shakeable imports to reduce bundle size. Only the imported language will be included in your bundle.
 
 ### Dynamic Language Switching
 

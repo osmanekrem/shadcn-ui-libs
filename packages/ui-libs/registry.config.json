@@ -79,8 +79,18 @@
           "type": "lib:utils"
         },
         {
-          "src": "src/lib/i18n.ts",
-          "dest": "lib/i18n.ts",
+          "src": "src/lib/i18n/index.ts",
+          "dest": "lib/i18n/index.ts",
+          "type": "lib:utils"
+        },
+        {
+          "src": "src/lib/i18n/types.ts",
+          "dest": "lib/i18n/types.ts",
+          "type": "lib:utils"
+        },
+        {
+          "src": "src/lib/i18n/utils.ts",
+          "dest": "lib/i18n/utils.ts",
           "type": "lib:utils"
         },
         {

@@ -10,6 +10,27 @@ import {
 } from "@tanstack/react-table";
 import { TableTranslations } from "../lib/i18n";
 
+/**
+ * Main configuration object for the DataTable component.
+ * 
+ * @template T - The type of data in each row
+ * 
+ * @example
+ * ```tsx
+ * const tableOptions: TableOptions<Person> = {
+ *   data: people,
+ *   columns: personColumns,
+ *   pagination: {
+ *     pageSize: 10,
+ *     totalRecords: 100,
+ *   },
+ *   filter: true,
+ *   globalFilter: {
+ *     show: true,
+ *   },
+ * };
+ * ```
+ */
 export type TableOptions<T> = {
   data: T[];
   columns: ColumnDef<T>[];
@@ -144,6 +165,38 @@ type ColumnSizing =
       defaultColumn?: never;
     };
 
+/**
+ * Column definition for DataTable.
+ * Extends TanStack Table's ColumnDef with additional filter and styling options.
+ * 
+ * @template T - The type of data in each row
+ * 
+ * @example
+ * ```tsx
+ * const columns: ColumnDef<Person>[] = [
+ *   {
+ *     accessorKey: "firstName",
+ *     header: "First Name",
+ *     filter: {
+ *       type: "text",
+ *       field: "firstName",
+ *       placeholder: "Search...",
+ *     },
+ *   },
+ *   {
+ *     accessorKey: "age",
+ *     header: "Age",
+ *     filter: {
+ *       type: "range",
+ *       field: "age",
+ *     },
+ *     size: 100,
+ *     minSize: 50,
+ *     maxSize: 200,
+ *   },
+ * ];
+ * ```
+ */
 export type ColumnDef<T> = {
   filter?: FilterType<T>;
   cell?: (info: CellContext<T, unknown>) => any;
@@ -190,6 +243,42 @@ export type GroupColumnDef<T> = {
   columns?: ColumnDef<T>[];
 } & TSGroupColumnDef<T, unknown>;
 
+/**
+ * Filter configuration for a column.
+ * Supports multiple filter types: text, range, select, boolean, date, and custom.
+ * 
+ * @template T - The type of data in each row
+ * 
+ * @example
+ * ```tsx
+ * // Text filter
+ * {
+ *   type: "text",
+ *   field: "firstName",
+ *   placeholder: "Search first name...",
+ * }
+ * 
+ * // Range filter
+ * {
+ *   type: "range",
+ *   field: "age",
+ *   minPlaceholder: "Min age",
+ *   maxPlaceholder: "Max age",
+ * }
+ * 
+ * // Select filter
+ * {
+ *   type: "select",
+ *   field: "status",
+ *   options: [
+ *     { label: "Active", value: "active" },
+ *     { label: "Inactive", value: "inactive" },
+ *   ],
+ *   optionLabel: "label",
+ *   optionValue: "value",
+ * }
+ * ```
+ */
 export type FilterType<T> = {
   field: string;
   className?: string;
@@ -233,6 +322,20 @@ export type FilterType<T> = {
     }
 );
 
+/**
+ * Pagination configuration options.
+ * 
+ * @example
+ * ```tsx
+ * const pagination: PaginationOptions = {
+ *   pageSize: 10,
+ *   totalRecords: 100,
+ *   pageSizeOptions: [5, 10, 20, 50],
+ *   mode: "advanced",
+ *   layout: ["total", "pageSize", "goto", "buttons"],
+ * };
+ * ```
+ */
 export type PaginationOptions = {
   pageSizeOptions?: number[];
   pageSize: number;
@@ -246,6 +349,28 @@ export type PaginationOptions = {
   layout?: ("total" | "pageSize" | "goto" | "buttons")[];
 };
 
+/**
+ * Event object passed to the onLazyLoad callback when lazy loading is enabled.
+ * Contains all the necessary information to fetch data from the server.
+ * 
+ * @example
+ * ```tsx
+ * const handleLazyLoad = async (event: LazyLoadEvent) => {
+ *   const response = await fetch("/api/data", {
+ *     method: "POST",
+ *     body: JSON.stringify({
+ *       page: event.page,
+ *       pageSize: event.rows,
+ *       filters: event.filters,
+ *       sorting: event.sorting,
+ *       globalFilter: event.globalFilter,
+ *     }),
+ *   });
+ *   const result = await response.json();
+ *   setData(result.data);
+ * };
+ * ```
+ */
 export type LazyLoadEvent = {
   first: number;
   rows: number;

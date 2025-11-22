@@ -28,7 +28,12 @@ const sharedPlugins = [
     compress: {
       drop_console: true,
       drop_debugger: true,
-      pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+      pure_funcs: [
+        "console.log",
+        "console.info",
+        "console.debug",
+        "console.warn",
+      ],
       passes: 2,
       unsafe: true,
       unsafe_comps: true,
@@ -47,7 +52,7 @@ const sharedPlugins = [
 ];
 
 const sharedExternal = [
-  "react", 
+  "react",
   "react-dom",
   "@radix-ui/react-checkbox",
   "@radix-ui/react-dropdown-menu",
@@ -58,7 +63,7 @@ const sharedExternal = [
   "class-variance-authority",
   "clsx",
   "lucide-react",
-  "tailwind-merge"
+  "tailwind-merge",
 ];
 
 const sharedTreeshake = {
@@ -66,6 +71,152 @@ const sharedTreeshake = {
   propertyReadSideEffects: false,
   unknownGlobalSideEffects: false,
 };
+
+// Locale entry points for tree-shaking
+const localeConfigs = [
+  { lang: "en", name: "defaultTranslations" },
+  { lang: "tr", name: "turkishTranslations" },
+  { lang: "es", name: "spanishTranslations" },
+  { lang: "fr", name: "frenchTranslations" },
+  { lang: "de", name: "germanTranslations" },
+];
+
+// Security module entry points for tree-shaking
+const securityModules = [
+  { module: "sanitize", path: "lib/security/sanitize" },
+  { module: "validation", path: "lib/security/validation" },
+  { module: "rate-limiter", path: "lib/security/rate-limiter" },
+  { module: "csp", path: "lib/security/csp" },
+];
+
+const localeBuilds = localeConfigs.map(({ lang }) => ({
+  input: `src/lib/i18n/locales/${lang}.ts`,
+  output: [
+    {
+      file: `dist/i18n/${lang}.js`,
+      format: "cjs",
+      exports: "named",
+      sourcemap: false,
+    },
+    {
+      file: `dist/i18n/${lang}.esm.js`,
+      format: "esm",
+      exports: "named",
+      sourcemap: false,
+    },
+  ],
+  plugins: [
+    peerDepsExternal(),
+    resolve({
+      browser: true,
+      preferBuiltins: true,
+    }),
+    commonjs({
+      include: /node_modules/,
+      transformMixedEsModules: true,
+    }),
+    typescript({
+      tsconfig: "./tsconfig.json",
+      exclude: ["**/*.stories.*", "**/*.test.*"],
+      compilerOptions: {
+        declaration: false,
+        declarationMap: false,
+        composite: false,
+      },
+    }),
+    terser({
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: [
+          "console.log",
+          "console.info",
+          "console.debug",
+          "console.warn",
+        ],
+        passes: 2,
+        unsafe: true,
+        unsafe_comps: true,
+        unsafe_Function: true,
+        unsafe_math: true,
+        unsafe_proto: true,
+        unsafe_regexp: true,
+        unsafe_undefined: true,
+      },
+      mangle: {
+        properties: {
+          regex: /^_/,
+        },
+      },
+    }),
+  ],
+  external: sharedExternal,
+  treeshake: sharedTreeshake,
+}));
+
+const securityBuilds = securityModules.map(({ module, path }) => ({
+  input: `src/${path}.ts`,
+  output: [
+    {
+      file: `dist/security/${module}.js`,
+      format: "cjs",
+      exports: "named",
+      sourcemap: false,
+    },
+    {
+      file: `dist/security/${module}.esm.js`,
+      format: "esm",
+      exports: "named",
+      sourcemap: false,
+    },
+  ],
+  plugins: [
+    peerDepsExternal(),
+    resolve({
+      browser: true,
+      preferBuiltins: true,
+    }),
+    commonjs({
+      include: /node_modules/,
+      transformMixedEsModules: true,
+    }),
+    typescript({
+      tsconfig: "./tsconfig.json",
+      exclude: ["**/*.stories.*", "**/*.test.*"],
+      compilerOptions: {
+        declaration: true,
+        declarationDir: "./dist/security",
+      },
+    }),
+    terser({
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: [
+          "console.log",
+          "console.info",
+          "console.debug",
+          "console.warn",
+        ],
+        passes: 2,
+        unsafe: true,
+        unsafe_comps: true,
+        unsafe_Function: true,
+        unsafe_math: true,
+        unsafe_proto: true,
+        unsafe_regexp: true,
+        unsafe_undefined: true,
+      },
+      mangle: {
+        properties: {
+          regex: /^_/,
+        },
+      },
+    }),
+  ],
+  external: sharedExternal,
+  treeshake: sharedTreeshake,
+}));
 
 export default [
   // Main entry point (table)
@@ -77,12 +228,14 @@ export default [
         format: "cjs",
         exports: "named",
         sourcemap: false,
+        inlineDynamicImports: true, // Inline dynamic imports for CJS
       },
       {
         file: "dist/index.esm.js",
         format: "esm",
         exports: "named",
         sourcemap: false,
+        inlineDynamicImports: true, // Inline dynamic imports for ESM
       },
     ],
     plugins: [
@@ -98,8 +251,8 @@ export default [
         },
       }),
       visualizer({
-        filename: "bundle-analysis.html",
-        open: true,
+        filename: "bundle-analysis-table.html",
+        open: process.env.NODE_ENV !== "production", // Only open in dev mode
         gzipSize: true,
         brotliSize: true,
       }),
@@ -124,8 +277,20 @@ export default [
         sourcemap: false,
       },
     ],
-    plugins: sharedPlugins,
+    plugins: [
+      ...sharedPlugins,
+      visualizer({
+        filename: "bundle-analysis-table-elements.html",
+        open: process.env.NODE_ENV !== "production", // Only open in dev mode
+        gzipSize: true,
+        brotliSize: true,
+      }),
+    ],
     external: sharedExternal,
     treeshake: sharedTreeshake,
   },
+  // Locale entry points (tree-shakeable)
+  ...localeBuilds,
+  // Security module entry points (tree-shakeable)
+  ...securityBuilds,
 ];

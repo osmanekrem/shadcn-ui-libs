@@ -11,7 +11,8 @@ import {
   SelectValue,
 } from "../ui/select";
 import { cn } from "../../lib/utils";
-import { sanitizeFilterValue, sanitizeSearchInput } from "../../lib/security";
+// Tree-shakeable imports - only imports what's needed
+import { sanitizeFilterValue, sanitizeSearchInput } from "../../lib/security/sanitize";
 import {
   TableTranslations,
   defaultTranslations,

@@ -11,7 +11,8 @@ import {
 } from "../components/ui/dropdown-menu";
 import { Button } from "../components/ui/button";
 import { cn } from "../lib/utils";
-import { sanitizeSearchInput } from "../lib/security";
+// Tree-shakeable import - only imports sanitizeSearchInput
+import { sanitizeSearchInput } from "../lib/security/sanitize";
 import {
   TableTranslations,
   defaultTranslations,

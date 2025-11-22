@@ -1,6 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import {
+  useEffect,
+  useMemo,
+  useState,
+  useCallback,
+  useRef,
+  lazy,
+  ComponentType,
+  Suspense,
+} from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -14,9 +23,15 @@ import {
   FilterFn,
   SortingFn,
   Header,
+  Table,
 } from "@tanstack/react-table";
-import FilterInput from "../filter-input";
-import { Column, ColumnDef, TableOptions } from "../../../types/types";
+import type {
+  Column,
+  ColumnDef,
+  TableOptions,
+  PaginationOptions,
+} from "../../../types/types";
+import type { TableTranslations } from "../../../lib/i18n";
 import { cn, getValue } from "../../../lib/utils";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import DebouncedInput from "../debounced-input";
@@ -30,42 +45,152 @@ import {
   TableRow,
 } from "../../ui/table";
 import { fuzzyFilter, fuzzySort, useExternalState } from "./actions";
-import ColumnVisibility from "../column-visibility";
-import Pagination, { GoToPage, PageSize } from "../pagination";
 
-import {
-  DndContext,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
-import {
-  arrayMove,
-  SortableContext,
-  horizontalListSortingStrategy,
-  useSortable,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+// Type definitions for lazy components
+type FilterInputProps<T> = {
+  column: Column<T>;
+  translations?: TableTranslations;
+};
 
-import { DraggableHeader, DraggableTableCell } from "../draggable-header";
+type ColumnVisibilityProps = {
+  table: Table<any>;
+  label?: string;
+};
+
+type PaginationContentProps<T> = {
+  table: Table<T>;
+  pagination: PaginationOptions;
+  translations?: TableTranslations;
+  t: (key: string, params?: Record<string, any>) => string;
+};
+
+// Lazy load optional features for better code splitting
+const FilterInputLazy = lazy(() =>
+  import("../filter-input.js").then((module) => ({
+    default: module.default as unknown as ComponentType<FilterInputProps<any>>,
+  }))
+);
+const ColumnVisibilityLazy = lazy(() =>
+  import("../column-visibility.js").then((module) => ({
+    default: module.default as unknown as ComponentType<ColumnVisibilityProps>,
+  }))
+);
+
+// Pagination content component (lazy loaded)
+const PaginationContentLazy = lazy(() =>
+  import("../pagination.js").then((module) => ({
+    default: ({
+      table,
+      pagination,
+      translations,
+      t,
+    }: PaginationContentProps<any>) => {
+      const Pagination = module.default;
+      const GoToPage = module.GoToPage;
+      const PageSize = module.PageSize;
+
+      return (
+        <div className="flex items-center justify-between py-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 px-2 text-sm">
+            {(
+              pagination.layout || ["total", "pageSize", "goto", "buttons"]
+            ).map((item: string) => {
+              switch (item) {
+                case "total":
+                  return (
+                    <span key="total">
+                      {(
+                        pagination.totalLabel ||
+                        t("pagination.totalRecords", {
+                          total: table.getFilteredRowModel().rows.length,
+                        })
+                      )?.replace(
+                        "{total}",
+                        String(table.getFilteredRowModel().rows.length)
+                      )}
+                    </span>
+                  );
+                case "pageSize":
+                  return (
+                    !!pagination.pageSizeOptions && (
+                      <PageSize
+                        key="pageSize"
+                        pagination={pagination}
+                        onSetPageSize={(size: number) => {
+                          table.setPageSize(size);
+                        }}
+                        pageSize={table.getState().pagination.pageSize}
+                        label={pagination.pageSizeLabel}
+                        translations={translations}
+                      />
+                    )
+                  );
+                case "goto":
+                  return (
+                    <GoToPage
+                      key="goto"
+                      label={pagination.goToPageLabel}
+                      currentPage={table.getState().pagination.pageIndex}
+                      onSetPage={(pageIndex: number) =>
+                        table.setPageIndex(pageIndex)
+                      }
+                      totalPages={table.getPageCount()}
+                      translations={translations}
+                    />
+                  );
+                case "buttons":
+                  const PaginationComponent =
+                    Pagination as React.ComponentType<any>;
+                  return (
+                    <PaginationComponent
+                      key="buttons"
+                      canNextPage={table.getCanNextPage()}
+                      canPreviousPage={table.getCanPreviousPage()}
+                      currentPage={table.getState().pagination.pageIndex}
+                      onNext={() => table.nextPage()}
+                      onPrevious={() => table.previousPage()}
+                      onSetPage={(pageIndex: number) =>
+                        table.setPageIndex(pageIndex)
+                      }
+                      totalPages={table.getPageCount()}
+                      className={pagination.className}
+                      maxVisiblePages={pagination.maxVisiblePages}
+                      mode={pagination.mode}
+                      translations={translations}
+                    />
+                  );
+                default:
+                  return null;
+              }
+            })}
+          </div>
+        </div>
+      );
+    },
+  }))
+);
+
+// Conditional imports for @dnd-kit - only loaded when reorderable is true
+import {
+  DraggableHeaderLazy,
+  DraggableTableCellLazy,
+} from "./draggable-header-lazy";
+import {
+  DndWrapper,
+  SortableContextWrapper,
+  useSensorsLazy,
+  lazyLoadDndUtilities,
+} from "./dnd-wrapper";
 import { Checkbox } from "../../ui/checkbox";
 import React from "react";
+// Import only used security utilities for better tree-shaking
+import { sanitizeSearchInput } from "../../../lib/security/sanitize";
 import {
-  sanitizeSearchInput,
   validatePaginationParams,
   validateSortingParams,
-  RateLimiter,
-} from "../../../lib/security";
-import {
-  defaultTranslations,
-  createTranslator,
-  TableTranslations,
-} from "../../../lib/i18n";
+} from "../../../lib/security/validation";
+import { RateLimiter } from "../../../lib/security/rate-limiter";
+import { defaultTranslations, createTranslator } from "../../../lib/i18n";
 import { Button } from "../../ui/button";
 
 type DraggableFilterCellProps<TData> = {
@@ -76,36 +201,91 @@ type DraggableFilterCellProps<TData> = {
   readonly isTableDragging?: boolean;
 };
 
-// DraggableFilterCell component for filter row
+// DraggableFilterCell component for filter row (non-draggable version)
 function DraggableFilterCell<TData>({
   header,
   colClassName = "",
   TableHeadComponent,
   translations,
   isTableDragging = false,
-}: DraggableFilterCellProps<TData>) {
-  const { isDragging, setNodeRef, transform } = useSortable({
-    id: header.column.id,
-  });
+  reorderable = false,
+}: DraggableFilterCellProps<TData> & { reorderable?: boolean }) {
+  // If reorderable, use lazy loaded version
+  if (reorderable) {
+    const [useSortable, setUseSortable] = React.useState<any>(null);
+    const [CSS, setCSS] = React.useState<any>(null);
+    const [isLoaded, setIsLoaded] = React.useState(false);
 
-  const style: React.CSSProperties = {
-    opacity: isDragging ? 0.8 : 1,
-    position: "relative",
-    transform: CSS.Translate.toString(transform),
-    transition:
-      isDragging || isTableDragging ? "none" : "transform 0.05s ease-out",
-    zIndex: isDragging ? 1 : 0,
-    width: header.getSize(),
-    minWidth: header.column.columnDef.minSize || 100,
-    maxWidth: header.column.columnDef.maxSize || "none",
-  };
+    React.useEffect(() => {
+      if (reorderable && !isLoaded) {
+        Promise.all([
+          import("@dnd-kit/sortable").then((mod) => mod.useSortable),
+          import("@dnd-kit/utilities").then((mod) => mod.CSS),
+        ]).then(([useSortableFn, CSSUtil]) => {
+          setUseSortable(() => useSortableFn);
+          setCSS(() => CSSUtil);
+          setIsLoaded(true);
+        });
+      }
+    }, [reorderable, isLoaded]);
 
+    if (isLoaded && useSortable && CSS) {
+      const { isDragging, setNodeRef, transform } = useSortable({
+        id: header.column.id,
+      });
+
+      const style: React.CSSProperties = {
+        opacity: isDragging ? 0.8 : 1,
+        position: "relative",
+        transform: CSS.Translate.toString(transform),
+        transition:
+          isDragging || isTableDragging ? "none" : "transform 0.05s ease-out",
+        zIndex: isDragging ? 1 : 0,
+        width: header.getSize(),
+        minWidth: header.column.columnDef.minSize || 100,
+        maxWidth: header.column.columnDef.maxSize || "none",
+      };
+
+      return (
+        <TableHeadComponent
+          key={header.column.id}
+          colSpan={header.colSpan}
+          ref={setNodeRef}
+          style={style}
+          className={cn(
+            (header.column.columnDef as ColumnDef<TData>).headerClassName,
+            (header.column.columnDef as ColumnDef<TData>).className,
+            colClassName
+          )}
+        >
+          <div className="w-full">
+            {flexRender(
+              !header.isPlaceholder && header.column.getCanFilter() ? (
+                <Suspense fallback={<div className="h-9 w-full" />}>
+                  <FilterInputLazy
+                    column={header.column as unknown as Column<any>}
+                    translations={translations}
+                  />
+                </Suspense>
+              ) : null,
+              header.getContext()
+            )}
+          </div>
+        </TableHeadComponent>
+      );
+    }
+  }
+
+  // Non-draggable version (fallback or when reorderable is false)
   return (
     <TableHeadComponent
       key={header.column.id}
       colSpan={header.colSpan}
-      ref={setNodeRef}
-      style={style}
+      style={{
+        width: header.getSize(),
+        minWidth: header.column.columnDef.minSize || 100,
+        maxWidth: header.column.columnDef.maxSize || "none",
+      }}
       className={cn(
         (header.column.columnDef as ColumnDef<TData>).headerClassName,
         (header.column.columnDef as ColumnDef<TData>).className,
@@ -115,10 +295,12 @@ function DraggableFilterCell<TData>({
       <div className="w-full">
         {flexRender(
           !header.isPlaceholder && header.column.getCanFilter() ? (
-            <FilterInput
-              column={header.column as Column<TData>}
-              translations={translations}
-            />
+            <Suspense fallback={<div className="h-9 w-full" />}>
+              <FilterInputLazy
+                column={header.column as Column<TData>}
+                translations={translations}
+              />
+            </Suspense>
           ) : null,
           header.getContext()
         )}
@@ -141,19 +323,147 @@ declare module "@tanstack/react-table" {
   }
 }
 
+/**
+ * Props for the DataTable component
+ *
+ * @template TData - The type of data in each row
+ *
+ * @example
+ * ```tsx
+ * <DataTable
+ *   tableOptions={{
+ *     data: users,
+ *     columns: userColumns,
+ *     pagination: { pageSize: 10, totalRecords: 100 },
+ *   }}
+ *   className="my-table"
+ * />
+ * ```
+ */
 export type DataTableProps<TData> = {
+  /** Main configuration object for the table */
   readonly tableOptions: TableOptions<TData>;
+  /** Additional CSS classes for the table container */
   readonly className?: string;
 
+  /** Custom table component (default: shadcn Table) */
   readonly TableComponent?: React.ElementType;
+  /** Custom table header component */
   readonly TableHeaderComponent?: React.ElementType;
+  /** Custom table row component */
   readonly TableRowComponent?: React.ElementType;
+  /** Custom table cell component */
   readonly TableCellComponent?: React.ElementType;
+  /** Custom table head component */
   readonly TableHeadComponent?: React.ElementType;
+  /** Custom table body component */
   readonly TableBodyComponent?: React.ElementType;
+  /** Custom table footer component */
   readonly TableFooterComponent?: React.ElementType;
 };
 
+/**
+ * A powerful, feature-rich React table component built on top of TanStack Table v8 with shadcn/ui styling.
+ *
+ * Features:
+ * - Advanced filtering (text, range, select, boolean, custom)
+ * - Multi-column sorting with fuzzy search support
+ * - Flexible pagination with customizable layouts
+ * - Column reordering (drag & drop)
+ * - Column resizing with interactive drag handles
+ * - Row selection (single and multi-row)
+ * - Global search with fuzzy matching
+ * - Lazy loading for server-side data
+ * - Column visibility controls
+ * - Internationalization support (5 languages)
+ * - Built-in security features (XSS protection, input sanitization)
+ *
+ * @template TData - The type of data in each row
+ *
+ * @param props - DataTable component props
+ * @param props.tableOptions - Main configuration object for the table
+ * @param props.className - Additional CSS classes for the table container
+ * @param props.TableComponent - Custom table component (default: shadcn Table)
+ * @param props.TableHeaderComponent - Custom table header component
+ * @param props.TableRowComponent - Custom table row component
+ * @param props.TableCellComponent - Custom table cell component
+ * @param props.TableHeadComponent - Custom table head component
+ * @param props.TableBodyComponent - Custom table body component
+ * @param props.TableFooterComponent - Custom table footer component
+ *
+ * @returns The rendered DataTable component
+ *
+ * @example
+ * ```tsx
+ * import { DataTable, ColumnDef } from "tanstack-shadcn-table";
+ *
+ * type Person = {
+ *   firstName: string;
+ *   lastName: string;
+ *   age: number;
+ * };
+ *
+ * const columns: ColumnDef<Person>[] = [
+ *   {
+ *     accessorKey: "firstName",
+ *     header: "First Name",
+ *     filter: {
+ *       type: "text",
+ *       field: "firstName",
+ *       placeholder: "Search...",
+ *     },
+ *   },
+ *   {
+ *     accessorKey: "age",
+ *     header: "Age",
+ *     filter: {
+ *       type: "range",
+ *       field: "age",
+ *     },
+ *   },
+ * ];
+ *
+ * function App() {
+ *   return (
+ *     <DataTable
+ *       tableOptions={{
+ *         data: people,
+ *         columns,
+ *         pagination: {
+ *           pageSize: 10,
+ *           totalRecords: people.length,
+ *         },
+ *       }}
+ *     />
+ *   );
+ * }
+ * ```
+ *
+ * @example
+ * ```tsx
+ * // With lazy loading
+ * <DataTable
+ *   tableOptions={{
+ *     data,
+ *     columns,
+ *     lazy: true,
+ *     onLazyLoad: async (event) => {
+ *       const result = await fetchData({
+ *         page: event.page,
+ *         pageSize: event.rows,
+ *         filters: event.filters,
+ *         sorting: event.sorting,
+ *       });
+ *       setData(result.data);
+ *     },
+ *     pagination: {
+ *       pageSize: 20,
+ *       totalRecords: 1000,
+ *     },
+ *   }}
+ * />
+ * ```
+ */
 export function DataTable<TData>({
   tableOptions,
   className = "",
@@ -471,30 +781,63 @@ export function DataTable<TData>({
     },
   });
 
-  // Memoize sortable items to ensure consistency
+  // Check if reorderable is enabled
+  const isReorderable = tableOptions.reorderable ?? false;
+
+  // Memoize sortable items to ensure consistency (only needed if reorderable)
   const sortableItems = useMemo(() => {
+    if (!isReorderable) return [];
     const tableColumnOrder = table.getState().columnOrder || [];
     const nonSelectionColumns = tableColumnOrder.filter(
       (id) => id !== "selection"
     );
-
     return nonSelectionColumns;
-  }, [table.getState().columnOrder]);
+  }, [table.getState().columnOrder, isReorderable]);
+
+  // Lazy load DND utilities only if reorderable
+  const [dndUtilities, setDndUtilities] = React.useState<{
+    closestCenter: any;
+    restrictToHorizontalAxis: any;
+    arrayMove: any;
+    horizontalListSortingStrategy: any;
+  } | null>(null);
+  const [sensors, setSensors] = React.useState<any[]>([]);
+  const [isDndLoaded, setIsDndLoaded] = React.useState(!isReorderable);
+
+  React.useEffect(() => {
+    if (isReorderable && !isDndLoaded) {
+      Promise.all([
+        lazyLoadDndUtilities(),
+        import("@dnd-kit/core").then((mod) => ({
+          MouseSensor: mod.MouseSensor,
+          TouchSensor: mod.TouchSensor,
+          KeyboardSensor: mod.KeyboardSensor,
+          useSensor: mod.useSensor,
+          useSensors: mod.useSensors,
+        })),
+      ]).then(([utils, dndKit]) => {
+        setDndUtilities(utils);
+        const sensors = dndKit.useSensors(
+          dndKit.useSensor(dndKit.MouseSensor, {}),
+          dndKit.useSensor(dndKit.TouchSensor, {}),
+          dndKit.useSensor(dndKit.KeyboardSensor, {})
+        );
+        setSensors(sensors);
+        setIsDndLoaded(true);
+      });
+    }
+  }, [isReorderable, isDndLoaded]);
 
   const handleDragEnd = useCallback(
-    (event: DragEndEvent) => {
-      const { active, over } = event;
+    (event: any) => {
+      if (!dndUtilities) return;
 
-      // Reset drag state
+      const { active, over } = event;
       setIsDragging(false);
 
       if (active && over && active.id !== over.id) {
-        // Prevent moving the selection column
-        if (active.id === "selection") {
-          return;
-        }
+        if (active.id === "selection") return;
 
-        // Get current column order immediately
         const currentColumnOrder = table.getState().columnOrder || [];
         const nonSelectionColumns = currentColumnOrder.filter(
           (id) => id !== "selection"
@@ -508,76 +851,65 @@ export function DataTable<TData>({
           return;
         }
 
-        // Calculate new order
-        const reorderedArray = arrayMove(
+        const reorderedArray = dndUtilities.arrayMove(
           nonSelectionColumns,
           oldIndex,
           newIndex
         );
 
-        // Update column order immediately
         onColumnOrderChange(reorderedArray);
       }
     },
-    [onColumnOrderChange, table]
+    [onColumnOrderChange, table, dndUtilities]
   );
 
   const handleDragStart = useCallback(() => {
     setIsDragging(true);
   }, []);
 
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {})
-  );
-
   // Add ref for table container
   const tableContainerRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <DndContext
-      collisionDetection={closestCenter}
-      modifiers={[restrictToHorizontalAxis]}
-      onDragEnd={handleDragEnd}
-      onDragStart={handleDragStart}
-      sensors={sensors}
-    >
-      <div className={`opal-datatable flex flex-col gap-2 ${className}`}>
-        <div className="flex flex-row gap-2 justify-between">
-          <div className="flex flex-row gap-2">
-            {tableOptions.globalFilter?.show && (
-              <DebouncedInput
-                value={globalFilter ?? ""}
-                onChange={(value) => {
-                  const sanitizedValue =
-                    typeof value === "string"
-                      ? sanitizeSearchInput(value)
-                      : String(value);
-                  table.setGlobalFilter(sanitizedValue);
-                }}
-                className=""
-                placeholder={t("filters.searchAllColumns")}
-                maxLength={500}
-                type="search"
-              />
-            )}
-            {tableOptions.filter && tableOptions.showFilterButton && (
-              <Button onClick={() => setShowFilter(!showFilter)}>
-                {showFilter ? t("filters.hideFilter") : t("filters.showFilter")}
-              </Button>
-            )}
-          </div>
-          <div className="flex flex-row gap-2">
-            {tableOptions.columnVisibility && (
-              <ColumnVisibility table={table} />
-            )}
-          </div>
+  // Render table content (with or without DND wrapper)
+  const tableContent = (
+    <div className={`opal-datatable flex flex-col gap-2 ${className}`}>
+      <div className="flex flex-row gap-2 justify-between">
+        <div className="flex flex-row gap-2">
+          {tableOptions.globalFilter?.show && (
+            <DebouncedInput
+              value={globalFilter ?? ""}
+              onChange={(value) => {
+                const sanitizedValue =
+                  typeof value === "string"
+                    ? sanitizeSearchInput(value)
+                    : String(value);
+                table.setGlobalFilter(sanitizedValue);
+              }}
+              className=""
+              placeholder={t("filters.searchAllColumns")}
+              maxLength={500}
+              type="search"
+            />
+          )}
+          {tableOptions.filter && tableOptions.showFilterButton && (
+            <Button onClick={() => setShowFilter(!showFilter)}>
+              {showFilter ? t("filters.hideFilter") : t("filters.showFilter")}
+            </Button>
+          )}
         </div>
-        <div className="flex flex-col" ref={tableContainerRef}>
-          <SortableContext
+        <div className="flex flex-row gap-2">
+          {tableOptions.columnVisibility && (
+            <Suspense fallback={<div className="h-9 w-9" />}>
+              <ColumnVisibilityLazy table={table} />
+            </Suspense>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col" ref={tableContainerRef}>
+        {isReorderable && isDndLoaded && dndUtilities ? (
+          <SortableContextWrapper
             items={sortableItems}
-            strategy={horizontalListSortingStrategy}
+            strategy={dndUtilities.horizontalListSortingStrategy}
           >
             <TableComponent>
               <TableHeaderComponent>
@@ -589,7 +921,7 @@ export function DataTable<TData>({
                     >
                       {headerGroup.headers.map((header) => {
                         return (
-                          <DraggableHeader
+                          <DraggableHeaderLazy
                             header={header}
                             colClassName={tableOptions.colClassName}
                             TableHeadComponent={TableHeadComponent}
@@ -597,7 +929,7 @@ export function DataTable<TData>({
                             reorderable={
                               header.column.id === "selection"
                                 ? false
-                                : tableOptions.reorderable
+                                : isReorderable
                             }
                             enableColumnResizing={
                               tableOptions.enableColumnResizing
@@ -642,10 +974,14 @@ export function DataTable<TData>({
                               <div className="w-full">
                                 {flexRender(
                                   header.isPlaceholder ? null : header.column.getCanFilter() ? (
-                                    <FilterInput
-                                      column={header.column as Column<TData>}
-                                      translations={tableOptions.translations}
-                                    />
+                                    <Suspense
+                                      fallback={<div className="h-9 w-full" />}
+                                    >
+                                      <FilterInputLazy
+                                        column={header.column as Column<TData>}
+                                        translations={tableOptions.translations}
+                                      />
+                                    </Suspense>
                                   ) : null,
                                   header.getContext()
                                 )}
@@ -661,6 +997,7 @@ export function DataTable<TData>({
                             TableHeadComponent={TableHeadComponent}
                             translations={tableOptions.translations}
                             isTableDragging={isDragging}
+                            reorderable={isReorderable}
                             key={header.column.id}
                           />
                         );
@@ -678,10 +1015,11 @@ export function DataTable<TData>({
                     >
                       {row.getVisibleCells().map((cell) => {
                         return (
-                          <DraggableTableCell<TData>
+                          <DraggableTableCellLazy<TData>
                             cell={cell}
                             colClassName={tableOptions.colClassName}
                             TableCellComponent={TableCellComponent}
+                            reorderable={isReorderable}
                             key={cell.column.id}
                           />
                         );
@@ -735,89 +1073,202 @@ export function DataTable<TData>({
                 </TableFooterComponent>
               )}
             </TableComponent>
-          </SortableContext>
-          {tableOptions.pagination && (
-            <div className="flex items-center justify-between py-4">
-              <div className="flex flex-wrap items-center justify-between gap-4 px-2 text-sm">
-                {(
-                  tableOptions.pagination.layout || [
-                    "total",
-                    "pageSize",
-                    "goto",
-                    "buttons",
-                  ]
-                ).map((item) => {
-                  switch (item) {
-                    case "total":
+          </SortableContextWrapper>
+        ) : (
+          <TableComponent>
+            <TableHeaderComponent>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <>
+                  <TableRowComponent
+                    key={"header_" + headerGroup.id}
+                    className={cn(tableOptions.rowClassName)}
+                  >
+                    {headerGroup.headers.map((header) => {
                       return (
-                        <span key="total">
-                          {(
-                            tableOptions.pagination!.totalLabel ||
-                            t("pagination.totalRecords", {
-                              total: table.getFilteredRowModel().rows.length,
-                            })
-                          )?.replace(
-                            "{total}",
-                            String(table.getFilteredRowModel().rows.length)
-                          )}
-                        </span>
+                        <DraggableHeaderLazy
+                          header={header}
+                          colClassName={tableOptions.colClassName}
+                          TableHeadComponent={TableHeadComponent}
+                          key={header.column.id}
+                          reorderable={false}
+                          enableColumnResizing={
+                            tableOptions.enableColumnResizing
+                          }
+                        />
                       );
-                    case "pageSize":
-                      return (
-                        !!tableOptions.pagination!.pageSizeOptions && (
-                          <PageSize
-                            pagination={tableOptions.pagination!}
-                            onSetPageSize={(size: number) => {
-                              table.setPageSize(size);
-                            }}
-                            pageSize={table.getState().pagination.pageSize}
-                            label={tableOptions.pagination!.pageSizeLabel}
-                            translations={tableOptions.translations}
-                          />
-                        )
-                      );
+                    })}
+                  </TableRowComponent>
+                </>
+              ))}
 
-                    case "goto":
+              {showFilter && (
+                <TableRowComponent
+                  className={cn(
+                    tableOptions.filterRowClassName,
+                    tableOptions.rowClassName
+                  )}
+                >
+                  {table.getHeaderGroups().map((headerGroup) =>
+                    headerGroup.headers.map((header) => {
+                      if (header.column.id === "selection") {
+                        return (
+                          <TableHeadComponent
+                            key={header.column.id}
+                            colSpan={header.colSpan}
+                            style={{
+                              width: header.getSize(),
+                              minWidth: header.column.columnDef.minSize || 100,
+                              maxWidth:
+                                header.column.columnDef.maxSize || "none",
+                            }}
+                            className={cn(
+                              (header.column.columnDef as ColumnDef<TData>)
+                                .headerClassName,
+                              (header.column.columnDef as ColumnDef<TData>)
+                                .className,
+                              tableOptions.colClassName
+                            )}
+                          >
+                            <div className="w-full">
+                              {flexRender(
+                                header.isPlaceholder ? null : header.column.getCanFilter() ? (
+                                  <Suspense
+                                    fallback={<div className="h-9 w-full" />}
+                                  >
+                                    <FilterInputLazy
+                                      column={header.column as Column<TData>}
+                                      translations={tableOptions.translations}
+                                    />
+                                  </Suspense>
+                                ) : null,
+                                header.getContext()
+                              )}
+                            </div>
+                          </TableHeadComponent>
+                        );
+                      }
+
                       return (
-                        <GoToPage
-                          label={tableOptions.pagination!.goToPageLabel}
-                          currentPage={table.getState().pagination.pageIndex}
-                          onSetPage={(pageIndex: number) =>
-                            table.setPageIndex(pageIndex)
-                          }
-                          totalPages={table.getPageCount()}
+                        <DraggableFilterCell<TData>
+                          header={header}
+                          colClassName={tableOptions.colClassName}
+                          TableHeadComponent={TableHeadComponent}
                           translations={tableOptions.translations}
+                          isTableDragging={false}
+                          reorderable={false}
+                          key={header.column.id}
                         />
                       );
-                    case "buttons":
+                    })
+                  )}
+                </TableRowComponent>
+              )}
+            </TableHeaderComponent>
+            <TableBodyComponent>
+              {table.getRowModel().rows.map((row) => {
+                return (
+                  <TableRowComponent
+                    key={row.id}
+                    className={tableOptions.filterRowClassName}
+                  >
+                    {row.getVisibleCells().map((cell) => {
                       return (
-                        <Pagination
-                          canNextPage={table.getCanNextPage()}
-                          canPreviousPage={table.getCanPreviousPage()}
-                          currentPage={table.getState().pagination.pageIndex}
-                          onNext={() => table.nextPage()}
-                          onPrevious={() => table.previousPage()}
-                          onSetPage={(pageIndex: number) =>
-                            table.setPageIndex(pageIndex)
-                          }
-                          totalPages={table.getPageCount()}
-                          className={tableOptions.pagination!.className}
-                          maxVisiblePages={
-                            tableOptions.pagination!.maxVisiblePages
-                          }
-                          mode={tableOptions.pagination!.mode}
-                          translations={tableOptions.translations}
+                        <DraggableTableCellLazy<TData>
+                          cell={cell}
+                          colClassName={tableOptions.colClassName}
+                          TableCellComponent={TableCellComponent}
+                          reorderable={false}
+                          key={cell.column.id}
                         />
                       );
+                    })}
+                  </TableRowComponent>
+                );
+              })}
+            </TableBodyComponent>
+            {table
+              .getAllLeafColumns()
+              .some(
+                (col) =>
+                  (col.columnDef as ColumnDef<TData>)?.footer !== undefined
+              ) && (
+              <TableFooterComponent>
+                {table.getFooterGroups().map((footerGroup) => {
+                  if (
+                    !footerGroup.headers.some(
+                      (header) =>
+                        (header.column.columnDef as ColumnDef<TData>)?.footer
+                    )
+                  ) {
+                    return null;
                   }
+                  return (
+                    <TableRowComponent key={footerGroup.id}>
+                      {footerGroup.headers.map((header) => (
+                        <TableHeadComponent
+                          key={header.id}
+                          colSpan={header.colSpan}
+                          style={{ width: `${header.getSize()}px` }}
+                          className={cn(
+                            (header.column.columnDef as ColumnDef<TData>)
+                              ?.footerClassName,
+                            (header.column.columnDef as ColumnDef<TData>)
+                              .className,
+                            tableOptions.colClassName
+                          )}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.footer,
+                                header.getContext()
+                              )}
+                        </TableHeadComponent>
+                      ))}
+                    </TableRowComponent>
+                  );
                 })}
+              </TableFooterComponent>
+            )}
+          </TableComponent>
+        )}
+        {tableOptions.pagination && (
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-between py-4">
+                <div className="h-9 w-full" />
               </div>
-            </div>
-          )}
-        </div>
+            }
+          >
+            <PaginationContentLazy
+              table={table}
+              pagination={tableOptions.pagination}
+              translations={tableOptions.translations}
+              t={t}
+            />
+          </Suspense>
+        )}
       </div>
-    </DndContext>
+    </div>
   );
+
+  // Wrap with DndContext only if reorderable is enabled and loaded
+  if (isReorderable && isDndLoaded && dndUtilities && sensors.length > 0) {
+    return (
+      <DndWrapper
+        onDragEnd={handleDragEnd}
+        onDragStart={handleDragStart}
+        sensors={sensors}
+        collisionDetection={dndUtilities.closestCenter}
+        modifiers={[dndUtilities.restrictToHorizontalAxis]}
+      >
+        {tableContent}
+      </DndWrapper>
+    );
+  }
+
+  // Otherwise, render without DND wrapper
+  return tableContent;
 }
 
 export default DataTable;
