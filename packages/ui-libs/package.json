@@ -1,6 +1,6 @@
 {
   "name": "tanstack-shadcn-table",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A powerful, feature-rich React table component built on top of TanStack Table v8 with shadcn/ui styling. Optimized bundle size with 55% reduction through peer dependencies.",
   "main": "dist/index.js",
   "module": "dist/index.esm.js",
@@ -98,7 +98,7 @@
     "build:i18n-types": "node scripts/generate-i18n-types.js",
     "build": "NODE_ENV=production npm run build:css && npm run build:registry && rollup -c && npm run build:i18n-types",
     "build:analyze": "ANALYZE=true npm run build:css && ANALYZE=true rollup -c",
-    "build:prod": "NODE_ENV=production npm run build:css && npm run build:registry && rollup -c",
+    "build:prod": "NODE_ENV=production npm run build:css && npm run build:registry && rollup -c && npm run build:i18n-types",
     "dev": "rollup -c -w",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

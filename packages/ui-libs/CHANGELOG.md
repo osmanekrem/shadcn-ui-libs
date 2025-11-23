@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.2] - 2025-01-27
+
+### Fixed
+
+- **TypeScript Declaration Files**: Fixed missing declaration files for subpath exports
+  - Added automatic generation of `table-elements.d.ts` and `ui-elements.d.ts` during build
+  - Resolved TypeScript error: "Could not find a declaration file for module 'tanstack-shadcn-table/table-elements'"
+  - Declaration files are now automatically created via Rollup build process using re-export pattern
+
+#### Technical Details
+
+- **Build Process**: Enhanced `final-cleanup` plugin in Rollup config to automatically generate declaration files
+- **Re-export Pattern**: Uses `export * from "./table-elements/index"` for clean type resolution
+- **Maintainability**: Removed manual script dependency, now handled automatically during build
+
 ## [1.1.0] - 2025-11-22
 
 ### 🎯 Tree-Shaking & Modular Architecture

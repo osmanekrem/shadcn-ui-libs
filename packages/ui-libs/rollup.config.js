@@ -673,6 +673,31 @@ const configsWithCleanup = buildConfigs.map((config, index, array) => {
             // Ignore errors
           }
         }
+
+        // Create re-export declaration files for subpath exports
+        const distDir = path.join(process.cwd(), "dist");
+        
+        // table-elements.d.ts
+        const tableElementsIndex = path.join(distDir, "table-elements/index.d.ts");
+        const tableElementsDts = path.join(distDir, "table-elements.d.ts");
+        if (fs.existsSync(tableElementsIndex)) {
+          fs.writeFileSync(
+            tableElementsDts,
+            'export * from "./table-elements/index";\n',
+            "utf-8"
+          );
+        }
+
+        // ui-elements.d.ts
+        const uiElementsIndex = path.join(distDir, "ui-elements/index.d.ts");
+        const uiElementsDts = path.join(distDir, "ui-elements.d.ts");
+        if (fs.existsSync(uiElementsIndex)) {
+          fs.writeFileSync(
+            uiElementsDts,
+            'export * from "./ui-elements/index";\n',
+            "utf-8"
+          );
+        }
       },
     });
   }
