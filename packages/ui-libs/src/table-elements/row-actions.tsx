@@ -173,7 +173,7 @@ export function RowActions<T>({
               }}
               className={cn(
                 action.destructive &&
-                  "text-destructive focus:text-destructive focus:bg-destructive/10"
+                  "text-destructive hover:text-destructive hover:bg-destructive/10 focus:text-destructive focus:bg-destructive/10"
               )}
             >
               {Icon && <Icon className="mr-2 h-4 w-4" />}

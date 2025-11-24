@@ -251,8 +251,26 @@ function onLazyLoad(event: LazyLoadEvent) {
       isActive: true,
     });
   }
-  if (event.filters?.length > 0 || event.sorting?.length > 0) {
-    const { sorting } = event;
+  
+  // Apply global filter first (searches across all columns)
+  if (event.globalFilter && event.globalFilter.trim() !== "") {
+    const searchTerm = event.globalFilter.toLowerCase();
+    lazyData = lazyData.filter((item) => {
+      // Search across all searchable fields
+      return (
+        String(item.firstName).toLowerCase().includes(searchTerm) ||
+        String(item.lastName).toLowerCase().includes(searchTerm) ||
+        String(item.age).includes(searchTerm) ||
+        String(item.visits).includes(searchTerm) ||
+        String(item.status.label).toLowerCase().includes(searchTerm) ||
+        String(item.progress).includes(searchTerm) ||
+        String(item.isActive).toLowerCase().includes(searchTerm)
+      );
+    });
+  }
+
+  // Apply column filters
+  if (event.filters?.length > 0) {
     const { filters } = event;
     filters.forEach((filter) => {
       const { value, id } = filter;
@@ -308,6 +326,11 @@ function onLazyLoad(event: LazyLoadEvent) {
         }
       }
     });
+  }
+
+  // Apply sorting
+  if (event.sorting?.length > 0) {
+    const { sorting } = event;
     sorting.forEach((sort) => {
       const { id, desc } = sort;
       lazyData = lazyData.sort((a, b) => {
@@ -322,15 +345,14 @@ function onLazyLoad(event: LazyLoadEvent) {
         return 0;
       });
     });
-
-    return lazyData.slice(0, event.rows);
-  } else {
-    const { first, rows } = event;
-    const start = first;
-    const end = first + rows;
-
-    return lazyData.slice(start, end);
   }
+
+  // Apply pagination
+  const { first, rows } = event;
+  const start = first;
+  const end = first + rows;
+
+  return lazyData.slice(start, end);
 }
 
 /**
@@ -1696,6 +1718,23 @@ export const AllFeatures: Story = {
     const handleLazyLoad = (event: LazyLoadEvent) => {
       // Simulate server-side processing
       let lazyData = [...extendedData];
+
+      // Apply global filter first (searches across all columns)
+      if (event.globalFilter && event.globalFilter.trim() !== "") {
+        const searchTerm = event.globalFilter.toLowerCase();
+        lazyData = lazyData.filter((item) => {
+          // Search across all searchable fields
+          return (
+            String(item.firstName).toLowerCase().includes(searchTerm) ||
+            String(item.lastName).toLowerCase().includes(searchTerm) ||
+            String(item.age).includes(searchTerm) ||
+            String(item.visits).includes(searchTerm) ||
+            String(item.status.label).toLowerCase().includes(searchTerm) ||
+            String(item.progress).includes(searchTerm) ||
+            String(item.isActive).toLowerCase().includes(searchTerm)
+          );
+        });
+      }
 
       // Apply filters
       if (event.filters?.length > 0) {
